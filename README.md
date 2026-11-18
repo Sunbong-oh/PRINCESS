@@ -5,7 +5,8 @@
 
 ## 바로 열기
 
-- 저장소를 올린 뒤 GitHub Pages(Settings → Pages → Branch: `main` / root)를 켜면 `https://<계정>.github.io/princess-talk/` 에서 열립니다.
+- 이미 GitHub Pages로 배포되어 있습니다: **https://sunbong-oh.github.io/PRINCESS/**
+  (저장소 `Sunbong-oh/PRINCESS`, Settings → Pages → Branch: `main` / root)
 - 빌드 과정이 없습니다. `index.html`을 브라우저로 열어도 됩니다.
   (마이크 인식은 `https://` 또는 `localhost`에서만 허용됩니다.)
 
