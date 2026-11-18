@@ -5,8 +5,8 @@
 
 ## 바로 열기
 
-- 배포 주소: **https://sunbong-oh.github.io/princess-talk/**
-- 빌드 과정이 없습니다. `index.html`을 브라우저로 열어도 동작합니다.
+- 저장소를 올린 뒤 GitHub Pages(Settings → Pages → Branch: `main` / root)를 켜면 `https://<계정>.github.io/princess-talk/` 에서 열립니다.
+- 빌드 과정이 없습니다. `index.html`을 브라우저로 열어도 됩니다.
   (마이크 인식은 `https://` 또는 `localhost`에서만 허용됩니다.)
 
 ## 무엇을 하나요

@@ -265,7 +265,10 @@
       box.appendChild(b);
     });
 
-    $('#mic-hint').classList.toggle('is-hidden', !SR);
+    $('#mic-hint').classList.remove('is-hidden');
+    $('#mic-hint').textContent = SR
+      ? '🎤 를 누르고 영어로 말해보세요. 아래 단어를 눌러도 돼요!'
+      : '마이크가 없어도 아래 단어를 눌러 정답을 고를 수 있어요.';
     const micBtn = $('#btn-mic');
     micBtn.style.display = SR ? '' : 'none';
 
@@ -529,6 +532,7 @@
       startStory(randomStory());
     });
     $('#btn-hear').addEventListener('click', () => speak(currentQ().text));
+    $('#today-card').addEventListener('click', () => $('#btn-today').click());
     $('#btn-mic').addEventListener('click', startListening);
     $('#btn-quit').addEventListener('click', () => {
       stopSpeak();
