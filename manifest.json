@@ -1,0 +1,20 @@
+{
+  "name": "Princess Talk — 공주와 영어로 말해요",
+  "short_name": "Princess Talk",
+  "description": "공주 그림을 보며 영어로 말해보는 어린이 말하기 게임 (4살·6살·8살)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff7fc",
+  "theme_color": "#fbe3f3",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

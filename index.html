@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Princess Talk · 공주와 영어로 말해요</title>
+<meta name="theme-color" content="#fbe3f3" />
+<meta name="description" content="공주 그림을 보며 영어로 말해보는 어린이 말하기 놀이. 4살·6살·8살 난이도, 매일 바뀌는 이야기." />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/icon.svg" />
+<link rel="manifest" href="manifest.json" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Gowun+Dodum&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+<div class="bg-deco" aria-hidden="true">
+  <span class="spark s1">✦</span><span class="spark s2">✧</span><span class="spark s3">✦</span>
+  <span class="spark s4">✧</span><span class="spark s5">✦</span><span class="spark s6">✧</span>
+</div>
+
+<main id="app">
+
+  <!-- ================= HOME ================= -->
+  <section class="screen is-active" id="screen-home">
+    <div class="home-inner">
+      <header class="brand">
+        <div class="crown">👑</div>
+        <h1>Princess <span>Talk</span></h1>
+        <p class="brand-sub">공주님과 함께 영어로 말해요</p>
+      </header>
+
+      <div class="level-picker" role="group" aria-label="난이도 선택">
+        <button class="level-btn" data-level="4"><span class="lvl-emoji">🐣</span><span class="lvl-txt">4살</span></button>
+        <button class="level-btn is-on" data-level="6"><span class="lvl-emoji">🌸</span><span class="lvl-txt">6살</span></button>
+        <button class="level-btn" data-level="8"><span class="lvl-emoji">👑</span><span class="lvl-txt">8살</span></button>
+      </div>
+
+      <div class="story-card" id="today-card">
+        <div class="story-thumb"><img id="today-img" alt="" /></div>
+        <div class="story-meta">
+          <span class="pill" id="today-pill">오늘의 이야기</span>
+          <h2 id="today-title">—</h2>
+          <p id="today-sub">—</p>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-xl" id="btn-today">▶︎ 오늘의 이야기 시작</button>
+      <button class="btn btn-ghost" id="btn-random">🎲 다른 공주 이야기</button>
+
+      <div class="sticker-strip" id="home-stickers" aria-label="모은 스티커">
+        <span class="sticker-label">내 스티커</span>
+        <div class="sticker-list" id="home-sticker-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PLAY ================= -->
+  <section class="screen" id="screen-play">
+    <div class="play-inner">
+      <div class="topbar">
+        <button class="icon-btn" id="btn-quit" aria-label="그만하기">✕</button>
+        <div class="topbar-mid">
+          <div class="progress" id="progress"><span></span><span></span><span></span><span></span></div>
+          <div class="topbar-title" id="play-title">—</div>
+        </div>
+        <div class="mini-levels">
+          <button class="mini-level" data-level="4">4</button>
+          <button class="mini-level" data-level="6">6</button>
+          <button class="mini-level" data-level="8">8</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <figure class="figure">
+          <img id="scene-img" alt="" />
+          <figcaption class="scene-tag" id="scene-tag"></figcaption>
+        </figure>
+
+        <div class="ask">
+          <p class="q-en" id="q-text">—</p>
+          <p class="q-ko" id="q-ko"></p>
+          <div class="ask-tools">
+            <button class="tool" id="btn-hear"><span>🔊</span> 다시 듣기</button>
+            <button class="tool tool-mic" id="btn-mic"><span>🎤</span> 말해보기</button>
+          </div>
+          <p class="mic-hint" id="mic-hint">마이크가 없어도 아래 단어를 눌러 정답을 고를 수 있어요.</p>
+        </div>
+
+        <div class="options" id="options"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" aria-live="polite"></div>
+  </section>
+
+  <!-- ================= RESULT ================= -->
+  <section class="screen" id="screen-result">
+    <div class="result-inner">
+      <div class="result-crown">👑</div>
+      <h2 class="result-title" id="result-title">Wonderful!</h2>
+      <p class="result-sub" id="result-sub">오늘의 이야기를 모두 마쳤어요</p>
+      <div class="result-stars" id="result-stars"></div>
+      <div class="result-stickers" id="result-stickers"></div>
+      <div class="result-art"><img id="result-img" alt="" /></div>
+      <button class="btn btn-primary btn-xl" id="btn-again">🔁 한 번 더</button>
+      <button class="btn btn-ghost" id="btn-new">🎲 다른 공주 이야기</button>
+    </div>
+  </section>
+
+</main>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

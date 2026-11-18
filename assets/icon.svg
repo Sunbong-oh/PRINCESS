@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe3f2"/>
+      <stop offset="0.55" stop-color="#f0e0ff"/>
+      <stop offset="1" stop-color="#e2f3ff"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="1" stop-color="#f0b32e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M116 344 L104 196 L182 250 L256 156 L330 250 L408 196 L396 344 Z" fill="url(#gold)" stroke="#e0a52e" stroke-width="10" stroke-linejoin="round"/>
+  <rect x="116" y="344" width="280" height="42" rx="16" fill="#f7c85a" stroke="#e0a52e" stroke-width="10"/>
+  <circle cx="256" cy="212" r="20" fill="#ff7cb6"/>
+  <circle cx="168" cy="286" r="15" fill="#8d68ff"/>
+  <circle cx="344" cy="286" r="15" fill="#63d2ff"/>
+  <text x="256" y="452" font-family="Georgia, serif" font-size="76" font-weight="bold" fill="#8d68ff" text-anchor="middle">PT</text>
+</svg>
