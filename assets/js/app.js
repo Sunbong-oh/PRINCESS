@@ -249,7 +249,8 @@
 
     const box = $('#options');
     box.innerHTML = '';
-    q.opts.forEach((opt, i) => {
+    // 보기 순서도 매번 달라지게 (정답 위치를 외우지 않도록)
+    shuffle(q.opts).forEach((opt, i) => {
       const b = document.createElement('button');
       b.className = 'opt';
       b.type = 'button';
