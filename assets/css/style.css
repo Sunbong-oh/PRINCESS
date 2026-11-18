@@ -212,8 +212,9 @@ h1,h2,h3,p{ margin:0; }
 .mic-hint.is-hidden{ display:none; }
 
 .options{ display:flex; flex-direction:column; gap:8px; padding-bottom:4px; flex:0 0 auto; }
+.opt-row{ display:flex; align-items:stretch; gap:8px; }
 .opt{
-  appearance:none; width:100%; text-align:left; cursor:pointer;
+  appearance:none; flex:1; min-width:0; text-align:left; cursor:pointer;
   background:rgba(255,255,255,.94); border:2.5px solid #fff;
   border-radius:18px; padding:14px 16px; min-height:58px;
   font-family:"Baloo 2","Gowun Dodum",sans-serif; font-size: clamp(17px, 4.6vw, 20px);
@@ -227,6 +228,27 @@ h1,h2,h3,p{ margin:0; }
   width:26px; height:26px; border-radius:50%; flex:0 0 auto;
   background:linear-gradient(180deg,#ffe7f5,#f6d7ff); border:2px solid #fff;
   display:grid; place-items:center; font-size:13px; color:#c07bb4; font-weight:800;
+}
+.opt .opt-text{ flex:1; min-width:0; }
+
+/* 🔊 보기 듣기 — 4살도 누르기 쉬운 큰 버튼, 정답 선택과 분리 */
+.opt-hear{
+  appearance:none; flex:0 0 auto; width:58px; min-height:58px; cursor:pointer;
+  border:2.5px solid #fff; border-radius:18px;
+  background:linear-gradient(180deg,#fff,#ffe9f6);
+  box-shadow:0 6px 16px rgba(126,82,160,.15), inset 0 -2px 0 rgba(255,143,196,.25);
+  display:grid; place-items:center; font-size:23px; line-height:1;
+  transition:transform .12s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.opt-hear:active{ transform:scale(.94); }
+.opt-hear.is-playing{
+  background:linear-gradient(180deg,#ffe3f3,#ffc9e6); border-color:#ff9ad0;
+  animation:hearPulse 1s ease-in-out infinite;
+}
+@keyframes hearPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,154,208,.55), 0 6px 16px rgba(126,82,160,.15);} 50%{ box-shadow:0 0 0 10px rgba(255,154,208,0), 0 6px 16px rgba(126,82,160,.15);} }
+.tool.is-playing{
+  background:linear-gradient(180deg,#fff,#ffe3f3); border-color:#ff9ad0;
+  animation:hearPulse 1s ease-in-out infinite;
 }
 .opt.opt-ok{ background:linear-gradient(180deg,#eafff4,#d5fbe8); border-color:#8ee9bd; color:#1f7d59; box-shadow:0 8px 18px rgba(56,201,138,.28); }
 .opt.opt-no{ background:linear-gradient(180deg,#fff4f4,#ffe4e4); border-color:#ffc0c0; color:#b45252; animation:shakeX .4s ease; }
@@ -274,6 +296,7 @@ h1,h2,h3,p{ margin:0; }
   .q-en{ font-size:clamp(18px, 5vw, 22px); }
   .ask{ padding:9px 12px 8px; }
   .opt{ min-height:52px; padding:11px 14px; }
+  .opt-hear{ width:52px; min-height:52px; font-size:21px; }
 }
 
 /* tablet / desktop */

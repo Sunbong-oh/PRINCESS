@@ -49,6 +49,13 @@
 
   /* ------------------------------ speech ------------------------------ */
   const synth = window.speechSynthesis;
+
+  /* 낭독 속도: 아이가 단어를 몰라도 따라 들을 수 있게 아주 천천히, 또박또박 읽습니다.
+     (기존 0.92 → 4살 0.68 / 6살 0.75 / 8살 0.82) 보기 낭독은 한 단어라 더 또렷하게 조금 더 느리게. */
+  const LEVEL_RATE = { 4: 0.68, 6: 0.75, 8: 0.82 };
+  function currentRate() { return LEVEL_RATE[state.level] || LEVEL_RATE[6]; }
+  function optionRate() { return Math.max(0.6, Math.round((currentRate() - 0.04) * 100) / 100); }
+
   let voice = null;
   function loadVoices() {
     if (!synth) return;
@@ -67,23 +74,38 @@
     if (typeof synth.onvoiceschanged !== 'undefined') synth.onvoiceschanged = loadVoices;
   }
   let speakTimer = null;
+  let autoTimer = null;
+  let speakSeq = 0;
+  function clearPlaying() { $$('.is-playing').forEach((el) => el.classList.remove('is-playing')); }
   function speak(text, opts) {
-    if (!synth || !text) return;
+    if (!synth || !text) return false;
     opts = opts || {};
+    const my = ++speakSeq;
     try {
-      synth.cancel();
       clearTimeout(speakTimer);
+      synth.cancel();
+      clearPlaying();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'en-US';
       if (voice) u.voice = voice;
-      u.rate = opts.rate || 0.92;
+      u.rate = opts.rate || currentRate();
       u.pitch = opts.pitch || 1.08;
       u.volume = 1;
+      const done = () => { if (my === speakSeq && opts.onend) opts.onend(); };
+      u.onend = done;
+      u.onerror = done;
       // some browsers drop the first utterance right after load
-      speakTimer = setTimeout(() => { try { synth.speak(u); } catch (e) {} }, 60);
-    } catch (e) {}
+      speakTimer = setTimeout(() => { try { synth.speak(u); } catch (e) { done(); } }, 60);
+      return true;
+    } catch (e) { return false; }
   }
-  function stopSpeak() { if (synth) { try { synth.cancel(); } catch (e) {} } clearTimeout(speakTimer); }
+  function stopSpeak() {
+    speakSeq += 1;
+    clearTimeout(autoTimer);
+    if (synth) { try { synth.cancel(); } catch (e) {} }
+    clearTimeout(speakTimer);
+    clearPlaying();
+  }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recog = null;
@@ -251,6 +273,9 @@
     box.innerHTML = '';
     // 보기 순서도 매번 달라지게 (정답 위치를 외우지 않도록)
     shuffle(q.opts).forEach((opt, i) => {
+      const row = document.createElement('div');
+      row.className = 'opt-row';
+
       const b = document.createElement('button');
       b.className = 'opt';
       b.type = 'button';
@@ -260,21 +285,43 @@
       dot.textContent = String.fromCharCode(65 + i);
       b.appendChild(dot);
       const t = document.createElement('span');
+      t.className = 'opt-text';
       t.textContent = opt;
       b.appendChild(t);
       b.addEventListener('click', () => onTapOption(b, opt));
-      box.appendChild(b);
+
+      // 🔊 보기 듣기: 정답을 고르지 않고 이 보기의 영어만 천천히 읽어줍니다.
+      const hear = document.createElement('button');
+      hear.className = 'opt-hear';
+      hear.type = 'button';
+      hear.dataset.say = opt;
+      hear.title = opt + ' 듣기';
+      hear.setAttribute('aria-label', opt + ' 듣기');
+      const sp = document.createElement('span');
+      sp.setAttribute('aria-hidden', 'true');
+      sp.textContent = '🔊';
+      hear.appendChild(sp);
+      hear.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        hearOption(hear, opt);
+      });
+
+      row.appendChild(b);
+      row.appendChild(hear);
+      box.appendChild(row);
     });
 
     $('#mic-hint').classList.remove('is-hidden');
     $('#mic-hint').textContent = SR
-      ? '🎤 를 누르고 영어로 말해보세요. 아래 단어를 눌러도 돼요!'
-      : '마이크가 없어도 아래 단어를 눌러 정답을 고를 수 있어요.';
+      ? '🎤 를 누르고 영어로 말해보세요. 🔊 를 누르면 보기를 들려줘요.'
+      : '마이크가 없어도 아래 단어를 눌러 정답을 고를 수 있어요. 🔊 로 보기를 들을 수 있어요.';
     const micBtn = $('#btn-mic');
     micBtn.style.display = SR ? '' : 'none';
 
-    // auto read the question
-    setTimeout(() => { if (!$('#screen-play').classList.contains('is-active')) return; speak(q.text); }, 380);
+    // auto read the question (사용자가 먼저 🔊를 누르면 이 예약은 취소됩니다)
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => { if (!$('#screen-play').classList.contains('is-active')) return; speak(q.text); }, 380);
   }
 
   function toast(msg, kind) {
@@ -290,6 +337,26 @@
     const q = currentQ();
     const correct = normalize(value) === normalize(q.answer);
     if (correct) { win(btn); } else { miss(btn); }
+  }
+
+  /* 보기 하나만 천천히 읽어주기 (정답 선택·채점과는 무관) */
+  function hearOption(btn, text) {
+    clearTimeout(autoTimer);
+    // 음성인식 중이면 TTS 소리를 마이크가 듣지 않도록 인식을 먼저 정리합니다.
+    if (listening && recog) {
+      try { recog.stop(); } catch (e) {}
+      toast('🔊 보기를 들려줄게요', '');
+    }
+    // speak()는 시작할 때 이전 강조를 지우므로, 강조는 speak() 다음에 켭니다.
+    const started = speak(text, {
+      rate: optionRate(),
+      onend: () => { if (btn) btn.classList.remove('is-playing'); }
+    });
+    if (started) {
+      if (btn) btn.classList.add('is-playing');
+    } else {
+      toast('이 브라우저는 소리를 낼 수 없어요.', 'no');
+    }
   }
   function miss(btn) {
     btn.classList.add('opt-no');
@@ -318,7 +385,7 @@
     store.set('pt.stickers', stickers);
     const praise = ['Great job!', 'Wonderful!', 'Well done!', 'Perfect!', 'You are amazing!'];
     toast(praise[Math.floor(Math.random() * praise.length)] + ' ' + sticker, 'ok');
-    speak(q.answer, { rate: 0.88 });
+    speak(q.answer);
     confetti();
     if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
     setTimeout(next, 1750);
@@ -351,7 +418,7 @@
     img.alt = state.story.princess.nameKo;
     show('screen-result');
     confetti(28);
-    speak('Wonderful! You did it!', { rate: 0.9 });
+    speak('Wonderful! You did it!');
   }
 
   /* ------------------------------ mic ------------------------------ */
@@ -433,6 +500,7 @@
     if (!SR) { toast('이 브라우저는 마이크를 지원하지 않아요.', 'no'); return; }
     if (listening) { try { recog.stop(); } catch (e) {} return; }
     if (!recog) recog = initRecog();
+    clearTimeout(autoTimer);
     stopSpeak();
     const q = currentQ();
     $('#q-ko').textContent = q.ko || '';
@@ -532,7 +600,14 @@
       speak('Once upon a time!');
       startStory(randomStory());
     });
-    $('#btn-hear').addEventListener('click', () => speak(currentQ().text));
+    $('#btn-hear').addEventListener('click', () => {
+      if (!state.story) return;
+      clearTimeout(autoTimer);
+      if (listening && recog) { try { recog.stop(); } catch (e) {} }
+      const hb = $('#btn-hear');
+      const started = speak(currentQ().text, { onend: () => hb.classList.remove('is-playing') });
+      if (started) hb.classList.add('is-playing');
+    });
     $('#today-card').addEventListener('click', () => $('#btn-today').click());
     $('#btn-mic').addEventListener('click', startListening);
     $('#btn-quit').addEventListener('click', () => {
