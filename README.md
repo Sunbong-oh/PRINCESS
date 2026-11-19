@@ -90,4 +90,4 @@ assets/img/*.webp     ← 주인공 6장 + 장면 18장 (총 24장, 약 4.3MB)
   피드백에 따라 토끼/동물 개수 문항을 모두 빼고 숲·장미로만 묻습니다.
 - 낭독 속도는 `assets/js/app.js`의 `LEVEL_RATE`(4/6/8살)에서 조절합니다.
   보기 낭독은 그보다 0.04 더 느립니다(`optionRate()`).
-- 스모크 테스트: `python3 work/princess-test/run_tests.py` (QuickJS + DOM 스텁, 86개 검사).
+- 스모크 테스트: `python3 work/princess-test/run_tests.py` (QuickJS + DOM 스텁, 90개 검사).
