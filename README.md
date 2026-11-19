@@ -90,4 +90,7 @@ assets/img/*.webp     ← 주인공 6장 + 장면 18장 (총 24장, 약 4.3MB)
   피드백에 따라 토끼/동물 개수 문항을 모두 빼고 숲·장미로만 묻습니다.
 - 낭독 속도는 `assets/js/app.js`의 `LEVEL_RATE`(4/6/8살)에서 조절합니다.
   보기 낭독은 그보다 0.04 더 느립니다(`optionRate()`).
-- 스모크 테스트: `python3 work/princess-test/run_tests.py` (QuickJS + DOM 스텁, 90개 검사).
+- 스모크 테스트: `python3 work/princess-test/run_tests.py` (QuickJS + DOM 스텁, 147개 검사).
+- 한 판의 1번 문제는 언제나 고른 공주(홈 카드·새 이야기·다시 읽기)의 문항입니다.
+  그 공주의 미출제 문항이 0개면 이미 푼 문항에서 3~5개를 다시 꺼내 앞자리에 놓고,
+  `pt.pool`에서는 풀에서 뽑은 미출제 문항만 뺍니다(`pickRound()`).
