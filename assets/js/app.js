@@ -230,71 +230,13 @@
   if (!Array.isArray(stickers)) stickers = [];
 
   /* ------------------------------ 문항 풀 ------------------------------ */
-  /* localStorage에 '아직 안 푼 문항' 목록을 두고, 한 판에 10문제씩 꺼냅니다.
-     선택한 공주의 미출제 문항을 1번 문제부터 채우고, 모자라면 다른 공주 문항으로 10문제를 맞춥니다.
-     50문항을 다 풀면 목록이 처음으로 돌아가 다시 순환합니다. */
-  function loadPool() {
-    const ids = allIds();
-    const known = {};
-    ids.forEach((id) => { known[id] = true; });
-    let pool = store.get('pt.pool', null);
-    if (!Array.isArray(pool)) pool = ids.slice();
-    const seen = {};
-    pool = pool.filter((id) => known[id] && !seen[id] && (seen[id] = true));
-    return pool;
-  }
-  function savePool(pool) { store.set('pt.pool', pool); }
-
-  /* 다시 꺼낼 때 고른 공주 문항에서 최소·최대로 앞자리에 놓는 개수 */
-  const PRIORITY_MIN = 3;
-  const PRIORITY_MAX = 5;
-
+  /* 공주마다 문항이 정확히 ROUND_SIZE(10)개씩 있습니다.
+     한 판은 고른 공주 한 명의 10문항을 전부 섞어서 냅니다 — 다른 공주 문항은 섞지 않습니다.
+     그래서 공주를 바꿔 가면 6명 × 10문항 = 60문항을 겹치지 않고 모두 풀 수 있습니다. */
   function pickRound(princess, rand) {
     const rnd = rand || Math.random;
-    const pool = loadPool();
-    const used = {};
-    const head = [];          // 1번 문제부터 차례로 놓이는 고른 공주 문항
-    const tail = [];          // 남은 자리를 채우는 다른 공주 문항
-    const fromPool = {};      // 이번 판에서 풀에서 꺼낸 문항 (풀에서 차감)
-
-    // 1) 풀에 남은 고른 공주 문항을 셔플해 1번 문제부터 앞자리에 놓습니다.
-    shuffleWith(pool.filter((id) => BY_ID[id].princess.id === princess.id), rnd)
-      .slice(0, ROUND_SIZE)
-      .forEach((id) => { used[id] = true; fromPool[id] = true; head.push(id); });
-
-    // 2) 풀에 그 공주 문항이 하나도 없으면(직전 판에서 그 공주를 다 푼 경우에도)
-    //    이미 푼 문항에서 3~5개를 다시 꺼내 1번 문제로 놓습니다. 풀은 건드리지 않습니다.
-    if (!head.length) {
-      const mine = allIds().filter((id) => BY_ID[id].princess.id === princess.id);
-      const want = Math.min(mine.length, ROUND_SIZE,
-        PRIORITY_MIN + Math.floor(rnd() * (PRIORITY_MAX - PRIORITY_MIN + 1)));
-      shuffleWith(mine, rnd).slice(0, want).forEach((id) => { used[id] = true; head.push(id); });
-    }
-
-    // 3) 남은 자리는 풀의 미출제 문항(다른 공주 포함)으로 채웁니다.
-    shuffleWith(pool, rnd).forEach((id) => {
-      if (head.length + tail.length >= ROUND_SIZE || used[id]) return;
-      used[id] = true; fromPool[id] = true; tail.push(id);
-    });
-
-    // 4) 풀에 남은 문항이 모자라면 전체 문항에서 채워 10문제를 꼭 맞춥니다 (풀은 새로 시작).
-    let refilled = false;
-    if (head.length + tail.length < ROUND_SIZE) {
-      refilled = true;
-      shuffleWith(allIds(), rnd).forEach((id) => {
-        if (head.length + tail.length >= ROUND_SIZE || used[id]) return;
-        used[id] = true; tail.push(id);
-      });
-    }
-
-    // 5) 풀 차감은 풀에서 꺼낸 미출제 문항만. 다시 꺼낸 문항은 풀에 그대로 남겨
-    //    다음 순환에서 한 번 더 나오게 합니다.
-    let next = refilled ? allIds().filter((id) => !used[id]) : pool.filter((id) => !fromPool[id]);
-    if (!next.length) next = allIds();
-    savePool(next);
-
-    // 고른 공주 문항(head)이 반드시 1번 문제부터. 통째로 다시 섞지 않습니다.
-    return head.concat(tail).map((id) => BY_ID[id]);
+    const mine = allIds().filter((id) => BY_ID[id].princess.id === princess.id);
+    return shuffleWith(mine, rnd).slice(0, ROUND_SIZE).map((id) => BY_ID[id]);
   }
 
   function buildStory(princess, rand, label) {
@@ -353,8 +295,7 @@
   function renderPoolInfo() {
     const el = $('#pool-info');
     if (!el) return;
-    const left = loadPool().length;
-    el.textContent = '이야기 ' + ALL.length + '문항 · 한 판 ' + ROUND_SIZE + '문제 · 아직 안 푼 문항 ' + left + '개';
+    el.textContent = '공주별 ' + ROUND_SIZE + '문제씩 · 총 ' + ALL.length + '문항';
   }
   function renderHome() {
     const princess = todaysPrincess();
@@ -371,11 +312,9 @@
   function preload(story) {
     story.items.forEach((it) => { const im = new Image(); im.src = it.img; });
   }
+  /* 한 판은 언제나 한 공주 이야기만 — 제목에도 그 공주 이름만 씁니다. */
   function roundTitle(story) {
-    const ids = [];
-    story.items.forEach((it) => { if (ids.indexOf(it.princess.id) === -1) ids.push(it.princess.id); });
-    if (ids.length <= 1) return story.princess.nameKo + ' · ' + story.princess.title;
-    return story.princess.nameKo + '와 친구들 · ' + ROUND_SIZE + '문제';
+    return story.princess.nameKo + ' · ' + ROUND_SIZE + '문제';
   }
   function buildProgress() {
     const p = $('#progress');

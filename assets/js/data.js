@@ -1,5 +1,7 @@
 /* Princess Talk — story & question data
-   6명 공주 × 4장 그림 = 24장, 총 50문항 (문항마다 4살·6살·8살 3단계).
+   6명 공주 × 4장 그림 = 24장, 공주마다 정확히 10문항, 총 60문항 (문항마다 4살·6살·8살 3단계).
+   한 판은 고른 공주 한 명의 10문항을 전부 섞어서 내고, 다른 공주 문항은 섞지 않습니다.
+   (6명 × 10문항 = 60문항을 공주를 바꿔 가며 겹치지 않고 다 풀 수 있습니다.)
 
    · 그림 속 사실은 이미지 생성 프롬프트와 이전 검증 기록으로 확인한 것만 씁니다.
    · 개수 세기 문항은 '화면에 크게 보이는 사물'만 씁니다 — 백설공주 컵 5개(탁자 위 한 줄),
@@ -174,6 +176,42 @@ const PRINCESSES = [
                [['apple'], ['red']],
                '바구니 안의 사과는 무슨 색일까요?')
         }
+      },
+      {
+        img: 'assets/img/sw-2-mugs.webp',
+        scene: '난쟁이 친구들',
+        q: {
+          4: Q('Where are the cups?', 'On the table',
+               ['On the table', 'On the bed', 'On the floor'],
+               [['table']],
+               '컵은 어디에 있나요?'),
+          6: Q('Where are the cups?', 'They are on the table',
+               ['They are on the table', 'They are on the bed', 'They are on the floor'],
+               [['table']],
+               '컵은 어디에 있나요?'),
+          8: Q('Where are the cups?', 'The cups are on the table.',
+               ['The cups are on the table.', 'The cups are on the bed.', 'The cups are on the floor.'],
+               [['table']],
+               '컵은 어디에 있나요?')
+        }
+      },
+      {
+        img: 'assets/img/sw-3-apples.webp',
+        scene: '사과 바구니',
+        q: {
+          4: Q('What is in the basket?', 'Apples',
+               ['Apples', 'Pears', 'Flowers'],
+               [['apple']],
+               '바구니 안에는 무엇이 있나요?'),
+          6: Q('What is in the basket?', 'Red apples',
+               ['Red apples', 'Green pears', 'Pink flowers'],
+               [['apple']],
+               '바구니 안에는 무엇이 있나요?'),
+          8: Q('What is in the basket?', 'There are red apples in the basket.',
+               ['There are red apples in the basket.', 'There are green pears in the basket.', 'There are pink flowers in the basket.'],
+               [['apple']],
+               '바구니 안에는 무엇이 있나요?')
+        }
       }
     ]
   },
@@ -328,6 +366,42 @@ const PRINCESSES = [
                ["The big clock shows twelve o'clock.", "The big clock shows three o'clock.", "The big clock shows six o'clock."],
                [['twelve', '12']],
                '큰 시계는 몇 시를 가리키나요?')
+        }
+      },
+      {
+        img: 'assets/img/ci-2-ballroom.webp',
+        scene: '성의 무도회장',
+        q: {
+          4: Q('Where are the flowers?', 'In the windows',
+               ['In the windows', 'On the floor', 'On the table'],
+               [['window']],
+               '꽃은 어디에 있나요?'),
+          6: Q('Where are the flowers?', 'In the tall windows',
+               ['In the tall windows', 'On the floor', 'On the table'],
+               [['window']],
+               '꽃은 어디에 있나요?'),
+          8: Q('Where are the pink flowers?', 'The pink flowers are in the tall windows.',
+               ['The pink flowers are in the tall windows.', 'The pink flowers are on the floor.', 'The pink flowers are on the table.'],
+               [['window']],
+               '분홍 꽃은 어디에 있나요?')
+        }
+      },
+      {
+        img: 'assets/img/hero-ci.webp',
+        scene: '공주',
+        q: {
+          4: Q('What is the slipper made of?', 'Glass',
+               ['Glass', 'Wood', 'Paper'],
+               [['glass']],
+               '유리구두는 무엇으로 만들어졌나요?'),
+          6: Q('What is the slipper made of?', 'Clear glass',
+               ['Clear glass', 'Brown wood', 'White paper'],
+               [['glass']],
+               '유리구두는 무엇으로 만들어졌나요?'),
+          8: Q('What is the glass slipper made of?', 'It is made of glass.',
+               ['It is made of glass.', 'It is made of wood.', 'It is made of paper.'],
+               [['glass']],
+               '유리구두는 무엇으로 만들어졌나요?')
         }
       }
     ]
@@ -502,6 +576,24 @@ const PRINCESSES = [
                [['sky'], ['pink', 'gold']],
                '해질녘 하늘은 무슨 색일까요?')
         }
+      },
+      {
+        img: 'assets/img/lm-3-castle.webp',
+        scene: '바닷가 성',
+        q: {
+          4: Q('What color is the castle?', 'White',
+               ['White', 'Black', 'Brown'],
+               [['white']],
+               '성은 무슨 색일까요?'),
+          6: Q('What color is the castle?', 'White castle',
+               ['White castle', 'Black castle', 'Brown castle'],
+               [['white']],
+               '성은 무슨 색일까요?'),
+          8: Q('What color is the castle on the cliff?', 'The castle is white.',
+               ['The castle is white.', 'The castle is black.', 'The castle is brown.'],
+               [['castle'], ['white']],
+               '절벽 위의 성은 무슨 색일까요?')
+        }
       }
     ]
   },
@@ -572,10 +664,10 @@ const PRINCESSES = [
         img: 'assets/img/sb-1-wheel.webp',
         scene: '물레',
         q: {
-          4: Q('Where is she?', 'Tower',
+          4: Q('What room is she in?', 'Tower',
                ['Tower', 'Cave', 'Boat'],
                [['tower']],
-               '그녀는 어디에 있나요?'),
+               '그녀는 어느 방에 있나요?'),
           6: Q('Where is she?', 'In a tower room',
                ['In a tower room', 'In a dark cave', 'On a small boat'],
                [['tower']],
@@ -644,18 +736,54 @@ const PRINCESSES = [
         img: 'assets/img/sb-3-roses.webp',
         scene: '장미 정원',
         q: {
-          4: Q('Where is she?', 'Garden',
-               ['Garden', 'Kitchen', 'School'],
+          4: Q('Where are the roses?', 'In the garden',
+               ['In the garden', 'In the kitchen', 'In the school'],
                [['garden']],
-               '그녀는 어디에 있나요?'),
-          6: Q('Where is she?', 'In a rose garden',
+               '장미는 어디에 있나요?'),
+          6: Q('Where are the roses?', 'In a rose garden',
                ['In a rose garden', 'In a dark cave', 'On a small boat'],
                [['garden', 'rose']],
-               '그녀는 어디에 있나요?'),
+               '장미는 어디에 있나요?'),
           8: Q('Where is she at sunrise?', 'She is in a rose garden at sunrise.',
                ['She is in a rose garden at sunrise.', 'She is in a dark cave at sunrise.', 'She is on a small boat at sunrise.'],
                [['garden']],
                '해가 뜰 때 그녀는 어디에 있나요?')
+        }
+      },
+      {
+        img: 'assets/img/sb-2-forest.webp',
+        scene: '숲속에서',
+        q: {
+          4: Q('What is she doing?', 'Laughing',
+               ['Laughing', 'Sleeping', 'Crying'],
+               [['laugh']],
+               '그녀는 무엇을 하고 있나요?'),
+          6: Q('What is she doing in the forest?', 'She is laughing',
+               ['She is laughing', 'She is sleeping', 'She is crying'],
+               [['laugh']],
+               '그녀는 숲에서 무엇을 하고 있나요?'),
+          8: Q('What is she doing in the forest?', 'She is laughing in the forest.',
+               ['She is laughing in the forest.', 'She is sleeping in the forest.', 'She is crying in the forest.'],
+               [['laugh']],
+               '그녀는 숲에서 무엇을 하고 있나요?')
+        }
+      },
+      {
+        img: 'assets/img/sb-3-roses.webp',
+        scene: '장미 정원',
+        q: {
+          4: Q('What color are the roses?', 'Pink',
+               ['Pink', 'Yellow', 'Blue'],
+               [['pink']],
+               '장미는 무슨 색일까요?'),
+          6: Q('What color are the roses around her?', 'Pink roses',
+               ['Pink roses', 'Yellow roses', 'Blue roses'],
+               [['pink'], ['rose']],
+               '그녀 주변의 장미는 무슨 색일까요?'),
+          8: Q('What color are the roses around her?', 'The roses around her are pink.',
+               ['The roses around her are pink.', 'The roses around her are yellow.', 'The roses around her are blue.'],
+               [['rose'], ['pink']],
+               '그녀 주변의 장미는 무슨 색일까요?')
         }
       }
     ]
@@ -830,6 +958,24 @@ const PRINCESSES = [
                [['mountain']],
                '그녀는 어디에 서 있나요?')
         }
+      },
+      {
+        img: 'assets/img/el-1-snowman.webp',
+        scene: '눈사람',
+        q: {
+          4: Q('What color is the snow?', 'White',
+               ['White', 'Brown', 'Green'],
+               [['white']],
+               '눈은 무슨 색일까요?'),
+          6: Q('What color is the snow?', 'White snow',
+               ['White snow', 'Brown snow', 'Green snow'],
+               [['white'], ['snow']],
+               '눈은 무슨 색일까요?'),
+          8: Q('What color is the snow?', 'The snow is white.',
+               ['The snow is white.', 'The snow is brown.', 'The snow is green.'],
+               [['snow'], ['white']],
+               '눈은 무슨 색일까요?')
+        }
       }
     ]
   },
@@ -984,6 +1130,42 @@ const PRINCESSES = [
                ['She is sitting in a small boat.', 'She is sitting in a big car.', 'She is sitting on a fast train.'],
                [['boat', 'ship']],
                '그녀는 어디에 앉아 있나요?')
+        }
+      },
+      {
+        img: 'assets/img/hero-ra.webp',
+        scene: '공주',
+        q: {
+          4: Q('What is in her hair?', 'Flowers',
+               ['Flowers', 'Stars', 'Shells'],
+               [['flower']],
+               '그녀의 머리에는 무엇이 있나요?'),
+          6: Q('What is in her hair?', 'Little flowers',
+               ['Little flowers', 'Little stars', 'Little shells'],
+               [['flower']],
+               '그녀의 머리에는 무엇이 있나요?'),
+          8: Q('What is in her hair?', 'She has flowers in her hair.',
+               ['She has flowers in her hair.', 'She has stars in her hair.', 'She has shells in her hair.'],
+               [['flower']],
+               '그녀의 머리에는 무엇이 있나요?')
+        }
+      },
+      {
+        img: 'assets/img/ra-2-painting.webp',
+        scene: '그림 그리기',
+        q: {
+          4: Q('Where is she painting?', 'Meadow',
+               ['Meadow', 'Beach', 'Kitchen'],
+               [['meadow']],
+               '그녀는 어디에서 그림을 그리나요?'),
+          6: Q('Where is she painting?', 'In a meadow',
+               ['In a meadow', 'On a beach', 'In a kitchen'],
+               [['meadow']],
+               '그녀는 어디에서 그림을 그리나요?'),
+          8: Q('Where is she painting a picture?', 'She is painting in the meadow.',
+               ['She is painting in the meadow.', 'She is painting on the beach.', 'She is painting in the kitchen.'],
+               [['meadow']],
+               '그녀는 어디에서 그림을 그리나요?')
         }
       }
     ]
