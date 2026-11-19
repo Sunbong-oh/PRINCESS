@@ -14,6 +14,8 @@
   --radius:26px;
   --shadow-soft: 0 10px 30px rgba(126, 82, 160, .16);
   --shadow-card: 0 14px 34px rgba(126, 82, 160, .20);
+  /* 장면 그림이 차지할 수 있는 최대 높이 — 그림은 절대 잘리지 않고 이 안에 '전체'가 들어옵니다 */
+  --scene-max: 44dvh;
 }
 
 *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -100,7 +102,7 @@ h1,h2,h3,p{ margin:0; }
   width:104px; height:130px; flex:0 0 auto; border-radius:18px; overflow:hidden;
   background:#f3e7ff; box-shadow:inset 0 0 0 2px rgba(255,255,255,.9), 0 6px 14px rgba(126,82,160,.18);
 }
-.story-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.story-thumb img{ width:100%; height:100%; object-fit:contain; display:block; }
 .story-meta{ min-width:0; }
 .pill{
   display:inline-block; font-size:12px; font-weight:700; color:#9a4bb8;
@@ -168,20 +170,29 @@ h1,h2,h3,p{ margin:0; }
 }
 .stage::-webkit-scrollbar{ display:none; }
 
+/* 원본 그림 전체(위·아래·좌·우 모두)가 보이도록 잘라내지 않습니다.
+   object-fit:contain + 원본 비율 유지 → 어떤 화면에서도 크롭 없음.
+   장면 이름표는 그림 '아래'에 두어 그림을 가리지 않습니다. */
 .figure{
   position:relative; margin:0; flex:0 0 auto;
-  border-radius:28px; overflow:hidden; background:#f0e6ff;
-  box-shadow:var(--shadow-card), inset 0 0 0 3px rgba(255,255,255,.85);
-  aspect-ratio:4/5; max-height:42dvh; min-height:150px;
-  align-self:center; width:100%;
+  align-self:center; width:100%; max-width:100%;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
 }
-.figure img{ width:100%; height:100%; object-fit:cover; object-position:center 28%; display:block; transition:opacity .3s ease; }
+.figure img{
+  display:block; width:auto; height:auto;
+  max-width:100%; max-height:var(--scene-max);
+  object-fit:contain; object-position:center;
+  border-radius:18px; background:#f6efff;
+  box-shadow:var(--shadow-card), 0 0 0 3px rgba(255,255,255,.92);
+  transition:opacity .3s ease;
+}
 .figure img.is-loading{ opacity:0; }
 .scene-tag{
-  position:absolute; left:12px; bottom:12px;
-  background:rgba(255,255,255,.86); backdrop-filter:blur(6px);
-  color:#7b4fa8; font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:999px;
-  box-shadow:0 4px 12px rgba(76,50,99,.16);
+  display:inline-block; max-width:100%;
+  background:rgba(255,255,255,.9);
+  color:#7b4fa8; font-size:12px; font-weight:700; padding:3px 12px; border-radius:999px;
+  box-shadow:0 4px 12px rgba(76,50,99,.12);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 
 .ask{
@@ -282,9 +293,10 @@ h1,h2,h3,p{ margin:0; }
 .result-stickers{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; font-size:26px; min-height:34px; }
 .result-art{
   width:100%; max-width:250px; aspect-ratio:4/5; border-radius:24px; overflow:hidden;
+  background:#f6efff;
   box-shadow:var(--shadow-card), inset 0 0 0 3px rgba(255,255,255,.85); margin:4px 0 6px;
 }
-.result-art img{ width:100%; height:100%; object-fit:cover; display:block; }
+.result-art img{ width:100%; height:100%; object-fit:contain; display:block; }
 .result-inner .btn{ max-width:420px; }
 
 /* ---------------- FX canvas ---------------- */
@@ -292,7 +304,9 @@ h1,h2,h3,p{ margin:0; }
 
 /* short phones: keep the answer cards reachable */
 @media (max-height:700px){
-  .figure{ max-height:34dvh; }
+  :root{ --scene-max:33dvh; }
+  .figure{ gap:4px; }
+  .scene-tag{ font-size:11px; padding:2px 10px; }
   .q-en{ font-size:clamp(18px, 5vw, 22px); }
   .ask{ padding:9px 12px 8px; }
   .opt{ min-height:52px; padding:11px 14px; }
@@ -300,13 +314,13 @@ h1,h2,h3,p{ margin:0; }
 
 /* tablet / desktop */
 @media (min-width:760px) and (min-height:700px){
+  :root{ --scene-max:46dvh; }
   .play-inner{ max-width:720px; }
-  .figure{ max-height:46dvh; }
   .home-inner{ max-width:680px; }
 }
 @media (min-width:900px){
+  :root{ --scene-max:48dvh; }
   .play-inner{ max-width:780px; }
-  .figure{ max-height:48dvh; max-width:min(100%, 430px); }
 }
 
 @media (prefers-reduced-motion: reduce){

@@ -2,7 +2,12 @@
    6명 공주 × 4장 그림 = 24장, 총 50문항 (문항마다 4살·6살·8살 3단계).
 
    · 그림 속 사실은 이미지 생성 프롬프트와 이전 검증 기록으로 확인한 것만 씁니다.
-     (백설공주 컵 5개·사과 3개, 인어공주 물고기 5마리·진주 3개만 개수 세기)
+   · 개수 세기 문항은 '화면에 크게 보이는 사물'만 씁니다 — 백설공주 컵 5개(탁자 위 한 줄),
+     인어공주 진주 3개(손에 든 조개 안) 두 곳뿐입니다.
+     사과 바구니(sw-3-apples)와 바닷속 물고기(lm-1-fish)는 화면에서 작거나 가려져 아이가
+     세기 어렵다는 지적에 따라, 개수 대신 한눈에 보이는 '무엇인가요' 질문으로 바꿉니다.
+   · 문제 화면은 그림을 object-fit:contain으로 '원본 전체'를 보여줍니다.
+     그래서 가장자리·아랫부분에 있는 작은 디테일을 정답으로 삼는 질문은 피해야 합니다.
    · 잠자는 숲속의 공주 숲 장면(sb-2-forest)은 토끼 그림이 아니라 아기천사처럼 보이는
      작은 요정이 보인다는 피드백이 있어, 토끼/동물 개수 문항을 모두 빼고 숲·장미로만 묻습니다.
    · 4살 보기는 관사 A/An을 붙이지 않은 단어 하나로 씁니다. (A ball → Ball)
@@ -136,20 +141,20 @@ const PRINCESSES = [
       },
       {
         img: 'assets/img/sw-3-apples.webp',
-        scene: '빨간 사과',
+        scene: '사과를 건네는 할머니',
         q: {
-          4: Q('How many apples are in the basket?', 'Three',
-               ['Two', 'Three', 'Four'],
-               [['three', '3']],
-               '바구니 안에 사과가 몇 개 있나요?'),
-          6: Q('How many apples are in the basket?', 'Three apples',
-               ['Two apples', 'Three apples', 'Four apples'],
-               [['three', '3'], ['apple']],
-               '바구니 안에 사과가 몇 개 있나요?'),
-          8: Q('How many apples are in her basket?', 'There are three apples in her basket.',
-               ['There are two apples in her basket.', 'There are three apples in her basket.', 'There are four apples in her basket.'],
-               [['three', '3'], ['apple']],
-               '바구니 안에 사과가 몇 개 있나요?')
+          4: Q('What is she holding?', 'Apple',
+               ['Apple', 'Cup', 'Shoe'],
+               [['apple']],
+               '할머니가 손에 들고 있는 것은 무엇인가요?'),
+          6: Q('What is the old woman holding?', 'Big red apple',
+               ['Big red apple', 'Big red cup', 'Big red shoe'],
+               [['apple']],
+               '할머니가 손에 들고 있는 것은 무엇인가요?'),
+          8: Q('What is the old woman holding out to her?', 'She is holding out a big red apple.',
+               ['She is holding out a big red apple.', 'She is holding out a big red cup.', 'She is holding out a big red shoe.'],
+               [['apple']],
+               '할머니가 무엇을 건네고 있나요?')
         }
       },
       {
@@ -394,18 +399,18 @@ const PRINCESSES = [
         img: 'assets/img/lm-1-fish.webp',
         scene: '산호초 친구들',
         q: {
-          4: Q('How many fish are with her?', 'Five',
-               ['Three', 'Five', 'Six'],
-               [['five', '5']],
-               '물고기가 몇 마리 있나요?'),
-          6: Q('How many fish are with her?', 'Five fish',
-               ['Three fish', 'Five fish', 'Six fish'],
-               [['five', '5'], ['fish']],
-               '물고기가 몇 마리 있나요?'),
-          8: Q('How many fish are swimming with her?', 'There are five fish swimming with her.',
-               ['There are three fish swimming with her.', 'There are five fish swimming with her.', 'There are six fish swimming with her.'],
-               [['five', '5'], ['fish']],
-               '물고기가 몇 마리 있나요?')
+          4: Q('What is swimming with her?', 'Fish',
+               ['Fish', 'Bird', 'Cat'],
+               [['fish']],
+               '그녀와 함께 헤엄치는 것은 무엇인가요?'),
+          6: Q('What is swimming with her?', 'Little fish',
+               ['Little fish', 'Little birds', 'Little cats'],
+               [['fish']],
+               '그녀와 함께 헤엄치는 것은 무엇인가요?'),
+          8: Q('What is swimming with her in the sea?', 'Little fish are swimming with her.',
+               ['Little fish are swimming with her.', 'Little birds are swimming with her.', 'Little cats are swimming with her.'],
+               [['fish']],
+               '바다에서 그녀와 함께 헤엄치는 것은 무엇인가요?')
         }
       },
       {
