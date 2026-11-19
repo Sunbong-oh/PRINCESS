@@ -134,6 +134,7 @@ h1,h2,h3,p{ margin:0; }
 .sticker-list{ display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
 .sticker-list span{ font-size:18px; filter:drop-shadow(0 2px 3px rgba(126,82,160,.2)); }
 .sticker-list .empty{ font-size:12.5px; color:#b9a5cd; }
+.pool-info{ font-size:12.5px; color:#a08bbd; text-align:center; margin-top:-6px; }
 
 /* ---------------- PLAY ---------------- */
 .play-inner{
@@ -208,13 +209,18 @@ h1,h2,h3,p{ margin:0; }
   animation:pulse 1.2s ease-in-out infinite;
 }
 @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,154,208,.55);} 50%{ box-shadow:0 0 0 10px rgba(255,154,208,0);} }
+@keyframes hearPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,154,208,.55), 0 6px 16px rgba(126,82,160,.15);} 50%{ box-shadow:0 0 0 10px rgba(255,154,208,0), 0 6px 16px rgba(126,82,160,.15);} }
+.tool.is-playing{
+  background:linear-gradient(180deg,#fff,#ffe3f3); border-color:#ff9ad0;
+  animation:hearPulse 1s ease-in-out infinite;
+}
 .mic-hint{ font-size:11.5px; color:#b6a4c9; margin-top:7px; text-align:center; }
 .mic-hint.is-hidden{ display:none; }
 
 .options{ display:flex; flex-direction:column; gap:8px; padding-bottom:4px; flex:0 0 auto; }
-.opt-row{ display:flex; align-items:stretch; gap:8px; }
+/* 보기 버튼 하나에 🔊 를 함께 넣었습니다. 한 번 누르면 읽어주고(선택), 한 번 더 누르면 정답! */
 .opt{
-  appearance:none; flex:1; min-width:0; text-align:left; cursor:pointer;
+  appearance:none; width:100%; min-width:0; text-align:left; cursor:pointer;
   background:rgba(255,255,255,.94); border:2.5px solid #fff;
   border-radius:18px; padding:14px 16px; min-height:58px;
   font-family:"Baloo 2","Gowun Dodum",sans-serif; font-size: clamp(17px, 4.6vw, 20px);
@@ -230,25 +236,19 @@ h1,h2,h3,p{ margin:0; }
   display:grid; place-items:center; font-size:13px; color:#c07bb4; font-weight:800;
 }
 .opt .opt-text{ flex:1; min-width:0; }
-
-/* 🔊 보기 듣기 — 4살도 누르기 쉬운 큰 버튼, 정답 선택과 분리 */
-.opt-hear{
-  appearance:none; flex:0 0 auto; width:58px; min-height:58px; cursor:pointer;
-  border:2.5px solid #fff; border-radius:18px;
-  background:linear-gradient(180deg,#fff,#ffe9f6);
-  box-shadow:0 6px 16px rgba(126,82,160,.15), inset 0 -2px 0 rgba(255,143,196,.25);
-  display:grid; place-items:center; font-size:23px; line-height:1;
-  transition:transform .12s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+.opt .opt-ear{
+  flex:0 0 auto; font-size:21px; line-height:1; opacity:.9;
+  filter:drop-shadow(0 2px 3px rgba(126,82,160,.18)); transition:transform .18s ease;
 }
-.opt-hear:active{ transform:scale(.94); }
-.opt-hear.is-playing{
-  background:linear-gradient(180deg,#ffe3f3,#ffc9e6); border-color:#ff9ad0;
-  animation:hearPulse 1s ease-in-out infinite;
+.opt.is-selected{
+  background:linear-gradient(180deg,#f7f1ff,#eee2ff); border-color:#b98bff; color:#4b2f79;
+  box-shadow:0 8px 20px rgba(141,104,255,.28), inset 0 -2px 0 rgba(185,139,255,.45);
+  transform:translateY(-1px);
 }
-@keyframes hearPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,154,208,.55), 0 6px 16px rgba(126,82,160,.15);} 50%{ box-shadow:0 0 0 10px rgba(255,154,208,0), 0 6px 16px rgba(126,82,160,.15);} }
-.tool.is-playing{
-  background:linear-gradient(180deg,#fff,#ffe3f3); border-color:#ff9ad0;
-  animation:hearPulse 1s ease-in-out infinite;
+.opt.is-selected .dot{ background:linear-gradient(180deg,#e6d7ff,#cdb0ff); color:#5b2fa0; }
+.opt.is-selected .opt-ear{ transform:scale(1.12); }
+.opt.is-playing{
+  border-color:#ff9ad0; animation:hearPulse 1s ease-in-out infinite;
 }
 .opt.opt-ok{ background:linear-gradient(180deg,#eafff4,#d5fbe8); border-color:#8ee9bd; color:#1f7d59; box-shadow:0 8px 18px rgba(56,201,138,.28); }
 .opt.opt-no{ background:linear-gradient(180deg,#fff4f4,#ffe4e4); border-color:#ffc0c0; color:#b45252; animation:shakeX .4s ease; }
@@ -296,7 +296,6 @@ h1,h2,h3,p{ margin:0; }
   .q-en{ font-size:clamp(18px, 5vw, 22px); }
   .ask{ padding:9px 12px 8px; }
   .opt{ min-height:52px; padding:11px 14px; }
-  .opt-hear{ width:52px; min-height:52px; font-size:21px; }
 }
 
 /* tablet / desktop */

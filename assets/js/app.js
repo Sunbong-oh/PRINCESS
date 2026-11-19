@@ -47,11 +47,21 @@
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   }
 
+  /* ------------------------------ 관사 ------------------------------ */
+  /* 4살 아이는 "A ball"의 A를 단어의 일부로 헷갈려 합니다.
+     보기·정답을 화면에 쓰고 읽어줄 때 앞의 A / An 은 떼어 냅니다. */
+  function stripArticle(s) {
+    return String(s == null ? '' : s).replace(/^\s*(?:a|an)\s+/i, '');
+  }
+  function sameAnswer(a, b) {
+    return normalize(stripArticle(a)) === normalize(stripArticle(b));
+  }
+
   /* ------------------------------ speech ------------------------------ */
   const synth = window.speechSynthesis;
 
   /* 낭독 속도: 아이가 단어를 몰라도 따라 들을 수 있게 아주 천천히, 또박또박 읽습니다.
-     (기존 0.92 → 4살 0.68 / 6살 0.75 / 8살 0.82) 보기 낭독은 한 단어라 더 또렷하게 조금 더 느리게. */
+     (4살 0.68 / 6살 0.75 / 8살 0.82 유지) 보기 낭독은 조금 더 느리게. */
   const LEVEL_RATE = { 4: 0.68, 6: 0.75, 8: 0.82 };
   function currentRate() { return LEVEL_RATE[state.level] || LEVEL_RATE[6]; }
   function optionRate() { return Math.max(0.6, Math.round((currentRate() - 0.04) * 100) / 100); }
@@ -95,7 +105,10 @@
       u.onend = done;
       u.onerror = done;
       // some browsers drop the first utterance right after load
-      speakTimer = setTimeout(() => { try { synth.speak(u); } catch (e) { done(); } }, 60);
+      speakTimer = setTimeout(() => {
+        if (my !== speakSeq) return;           // 취소된 발화는 소리 내지 않습니다
+        try { synth.speak(u); } catch (e) { done(); }
+      }, 60);
       return true;
     } catch (e) { return false; }
   }
@@ -107,6 +120,37 @@
     clearPlaying();
   }
 
+  /* 질문 → A·B·C 보기 순서로 이어 읽는 큐. 취소되면 즉시 멈춥니다. */
+  let readSeq = 0;
+  function cancelRead() {
+    readSeq += 1;
+    stopSpeak();
+  }
+  function readQuestionAndOptions() {
+    readSeq += 1;
+    const my = readSeq;
+    stopSpeak();
+    const q = currentQ();
+    const parts = [{ text: q.text, rate: currentRate(), gap: 650 }];
+    state.opts.forEach((label, i) => {
+      parts.push({ text: String.fromCharCode(65 + i) + '. ' + label, rate: optionRate(), gap: 480 });
+    });
+    let k = 0;
+    const step = () => {
+      if (my !== readSeq) return;
+      if (k >= parts.length) { clearPlaying(); return; }
+      const p = parts[k++];
+      const started = speak(p.text, {
+        rate: p.rate,
+        onend: () => { if (my !== readSeq) return; setTimeout(step, p.gap); }
+      });
+      if (!started) return;
+      const hb = $('#btn-hear');
+      if (hb) hb.classList.add('is-playing');
+    };
+    autoTimer = setTimeout(step, 400);
+  }
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recog = null;
   let listening = false;
@@ -114,12 +158,15 @@
   /* ------------------------------ answer matching ------------------------------ */
   const NUM = { 0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve' };
   const HOMOPHONE = { to: 'two', too: 'two', for: 'four', fore: 'four', tree: 'three', free: 'three', ate: 'eight', won: 'one', sx: 'six', ive: 'five' };
+  const ARTICLES = { a: 1, an: 1, the: 1 };
 
   function normalize(str) {
     let s = String(str || '').toLowerCase();
     s = s.replace(/[’‘`]/g, "'").replace(/'s\b/g, 's').replace(/[^a-z0-9'\s]/g, ' ');
     s = s.replace(/\b\d+\b/g, (m) => (NUM[m] !== undefined ? NUM[m] : m));
-    return s.split(/\s+/).filter(Boolean).map((t) => HOMOPHONE[t] || t).join(' ');
+    const tokens = s.split(/\s+/).filter(Boolean).map((t) => HOMOPHONE[t] || t);
+    // 관사는 있든 없든 같은 답으로 봅니다 (a ball = ball)
+    return tokens.filter((t) => !ARTICLES[t]).join(' ');
   }
   function lev(a, b) {
     const m = a.length, n = b.length;
@@ -153,6 +200,18 @@
     );
   }
 
+  /* ------------------------------ data index ------------------------------ */
+  const ALL = [];
+  PRINCESSES.forEach((p) => {
+    p.items.forEach((it, i) => {
+      ALL.push({ id: p.id + ':' + i, img: it.img, scene: it.scene, q: it.q, princess: p });
+    });
+  });
+  const BY_ID = {};
+  ALL.forEach((it) => { BY_ID[it.id] = it; });
+  const ROUND_SIZE = 10;                    // 한 판(하루)에 10문제
+  function allIds() { return ALL.map((it) => it.id); }
+
   /* ------------------------------ state ------------------------------ */
   const state = {
     level: store.get('pt.level', 6),
@@ -161,6 +220,8 @@
     earned: [],
     tries: 0,
     locked: false,
+    opts: [],        // 화면에 보이는 보기 (A, B, C 순서)
+    selected: -1,    // 한 번 눌러 선택만 된 보기
     answered: []
   };
   if (LEVELS.indexOf(state.level) === -1) state.level = 6;
@@ -168,16 +229,58 @@
   let stickers = store.get('pt.stickers', []);
   if (!Array.isArray(stickers)) stickers = [];
 
-  /* ------------------------------ story picking ------------------------------ */
+  /* ------------------------------ 문항 풀 ------------------------------ */
+  /* localStorage에 '아직 안 푼 문항' 목록을 두고, 한 판에 10문제씩 꺼냅니다.
+     선택한 공주의 미출제 문항을 먼저 채우고, 모자라면 다른 공주 문항으로 10문제를 맞춥니다.
+     50문항을 다 풀면 목록이 처음으로 돌아가 다시 순환합니다. */
+  function loadPool() {
+    const ids = allIds();
+    const known = {};
+    ids.forEach((id) => { known[id] = true; });
+    let pool = store.get('pt.pool', null);
+    if (!Array.isArray(pool)) pool = ids.slice();
+    const seen = {};
+    pool = pool.filter((id) => known[id] && !seen[id] && (seen[id] = true));
+    return pool;
+  }
+  function savePool(pool) { store.set('pt.pool', pool); }
+
+  function pickRound(princess, rand) {
+    const rnd = rand || Math.random;
+    const pool = loadPool();
+    const taken = [];
+    const used = {};
+    const push = (id) => {
+      if (taken.length >= ROUND_SIZE || used[id] || !BY_ID[id]) return;
+      used[id] = true;
+      taken.push(id);
+    };
+    // 1) 고른 공주의 미출제 문항 먼저
+    shuffleWith(pool.filter((id) => BY_ID[id].princess.id === princess.id), rnd).forEach(push);
+    // 2) 모자라면 다른 공주의 미출제 문항으로 채움
+    shuffleWith(pool, rnd).forEach(push);
+    // 3) 풀에 남은 문항이 10개보다 적으면 풀을 새로 채워 10문제를 꼭 맞춤
+    let source = pool;
+    if (taken.length < ROUND_SIZE) {
+      source = allIds();
+      shuffleWith(source, rnd).forEach(push);
+    }
+    const next = source.filter((id) => !used[id]);
+    savePool(next.length ? next : allIds());
+    return shuffleWith(taken, rnd).map((id) => BY_ID[id]);
+  }
+
   function buildStory(princess, rand, label) {
-    const items = rand ? shuffleWith(princess.items, rand) : shuffle(princess.items);
-    return { princess: princess, items: items, label: label || '' };
+    return { princess: princess, items: pickRound(princess, rand), label: label || '' };
+  }
+  /* 오늘의 공주는 날짜로 정해집니다 (홈 화면에서는 문항을 꺼내지 않습니다). */
+  function todaysPrincess() {
+    const seed = hashStr('princess-talk-' + dayKey());
+    return PRINCESSES[Math.floor(rng(seed)() * PRINCESSES.length)];
   }
   function todaysStory() {
     const seed = hashStr('princess-talk-' + dayKey());
-    const rand = rng(seed);
-    const princess = PRINCESSES[Math.floor(rand() * PRINCESSES.length)];
-    return buildStory(princess, rand, '오늘의 이야기');
+    return buildStory(todaysPrincess(), rng(seed), '오늘의 이야기');
   }
   function randomStory() {
     const pool = PRINCESSES.filter((p) => !state.story || p.id !== state.story.princess.id);
@@ -220,29 +323,50 @@
     $$('.level-btn').forEach((b) => b.classList.toggle('is-on', Number(b.dataset.level) === state.level));
     $$('.mini-level').forEach((b) => b.classList.toggle('is-on', Number(b.dataset.level) === state.level));
   }
+  function renderPoolInfo() {
+    const el = $('#pool-info');
+    if (!el) return;
+    const left = loadPool().length;
+    el.textContent = '이야기 ' + ALL.length + '문항 · 한 판 ' + ROUND_SIZE + '문제 · 아직 안 푼 문항 ' + left + '개';
+  }
   function renderHome() {
-    const story = todaysStory();
-    $('#today-img').src = story.princess.items[0].img;
-    $('#today-img').alt = story.princess.nameKo + ' ' + story.princess.name;
-    $('#today-title').textContent = story.princess.nameKo + ' · ' + story.princess.title;
-    $('#today-sub').textContent = story.princess.name + ' — ' + story.princess.titleKo;
+    const princess = todaysPrincess();
+    $('#today-img').src = princess.items[0].img;
+    $('#today-img').alt = princess.nameKo + ' ' + princess.name;
+    $('#today-title').textContent = princess.nameKo + ' · ' + princess.title;
+    $('#today-sub').textContent = princess.name + ' — ' + princess.titleKo;
     renderLevels();
     renderStickers();
+    renderPoolInfo();
   }
 
   /* ------------------------------ play ------------------------------ */
   function preload(story) {
     story.items.forEach((it) => { const im = new Image(); im.src = it.img; });
   }
+  function roundTitle(story) {
+    const ids = [];
+    story.items.forEach((it) => { if (ids.indexOf(it.princess.id) === -1) ids.push(it.princess.id); });
+    if (ids.length <= 1) return story.princess.nameKo + ' · ' + story.princess.title;
+    return story.princess.nameKo + '와 친구들 · ' + ROUND_SIZE + '문제';
+  }
+  function buildProgress() {
+    const p = $('#progress');
+    if (!p) return;
+    p.innerHTML = '';
+    for (let i = 0; i < ROUND_SIZE; i++) p.appendChild(document.createElement('span'));
+  }
   function startStory(story) {
     state.story = story;
     state.index = 0;
     state.earned = [];
     state.answered = [];
+    state.selected = -1;
     preload(story);
-    $('#play-title').textContent = story.princess.nameKo + ' · ' + story.princess.title;
+    $('#play-title').textContent = roundTitle(story);
     show('screen-play');
     renderLevels();
+    buildProgress();
     renderQuestion();
   }
   function renderProgress() {
@@ -256,72 +380,63 @@
     const q = currentQ();
     state.tries = 0;
     state.locked = false;
+    state.selected = -1;
     renderProgress();
 
     const img = $('#scene-img');
     img.classList.add('is-loading');
     img.onload = () => img.classList.remove('is-loading');
     img.src = item.img;
-    img.alt = state.story.princess.nameKo + ' — ' + item.scene;
+    img.alt = item.princess.nameKo + ' — ' + item.scene;
     if (img.complete) img.classList.remove('is-loading');
-    $('#scene-tag').textContent = item.scene;
+    $('#scene-tag').textContent = item.princess.nameKo + ' · ' + item.scene;
 
     $('#q-text').textContent = q.text;
     $('#q-ko').textContent = q.ko || '';
 
     const box = $('#options');
     box.innerHTML = '';
-    // 보기 순서도 매번 달라지게 (정답 위치를 외우지 않도록)
-    shuffle(q.opts).forEach((opt, i) => {
-      const row = document.createElement('div');
-      row.className = 'opt-row';
-
+    // 보기 순서는 매번 섞고, 순서대로 A·B·C 이름을 붙입니다.
+    state.opts = [];
+    shuffle(q.opts).forEach((raw, i) => {
+      const value = stripArticle(raw);
       const b = document.createElement('button');
       b.className = 'opt';
       b.type = 'button';
-      b.dataset.value = opt;
+      b.dataset.value = value;
+      b.dataset.index = String(i);
+
       const dot = document.createElement('span');
       dot.className = 'dot';
       dot.textContent = String.fromCharCode(65 + i);
       b.appendChild(dot);
+
       const t = document.createElement('span');
       t.className = 'opt-text';
-      t.textContent = opt;
+      t.textContent = value;
       b.appendChild(t);
-      b.addEventListener('click', () => onTapOption(b, opt));
 
-      // 🔊 보기 듣기: 정답을 고르지 않고 이 보기의 영어만 천천히 읽어줍니다.
-      const hear = document.createElement('button');
-      hear.className = 'opt-hear';
-      hear.type = 'button';
-      hear.dataset.say = opt;
-      hear.title = opt + ' 듣기';
-      hear.setAttribute('aria-label', opt + ' 듣기');
-      const sp = document.createElement('span');
-      sp.setAttribute('aria-hidden', 'true');
-      sp.textContent = '🔊';
-      hear.appendChild(sp);
-      hear.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        hearOption(hear, opt);
-      });
+      // 보기 안의 🔊 — 버튼은 하나입니다. 한 번 누르면 읽어주고, 한 번 더 누르면 정답!
+      const ear = document.createElement('span');
+      ear.className = 'opt-ear';
+      ear.setAttribute('aria-hidden', 'true');
+      ear.textContent = '🔊';
+      b.appendChild(ear);
 
-      row.appendChild(b);
-      row.appendChild(hear);
-      box.appendChild(row);
+      b.addEventListener('click', () => onTapOption(b, i));
+      box.appendChild(b);
+      state.opts.push(value);
     });
 
     $('#mic-hint').classList.remove('is-hidden');
     $('#mic-hint').textContent = SR
-      ? '🎤 를 누르고 영어로 말해보세요. 🔊 를 누르면 보기를 들려줘요.'
-      : '마이크가 없어도 아래 단어를 눌러 정답을 고를 수 있어요. 🔊 로 보기를 들을 수 있어요.';
+      ? '보기를 한 번 누르면 들려주고, 한 번 더 누르면 정답이에요. 🎤 로 말해도 좋아요!'
+      : '보기를 한 번 누르면 들려주고, 한 번 더 누르면 정답이에요.';
     const micBtn = $('#btn-mic');
     micBtn.style.display = SR ? '' : 'none';
 
-    // auto read the question (사용자가 먼저 🔊를 누르면 이 예약은 취소됩니다)
-    clearTimeout(autoTimer);
-    autoTimer = setTimeout(() => { if (!$('#screen-play').classList.contains('is-active')) return; speak(q.text); }, 380);
+    // 질문을 읽고, 잠깐 쉬었다가 A·B·C 보기를 차례로 읽어줍니다.
+    readQuestionAndOptions();
   }
 
   function toast(msg, kind) {
@@ -332,47 +447,44 @@
     toast._t = setTimeout(() => { el.className = 'toast'; }, 1900);
   }
 
-  function onTapOption(btn, value) {
+  /* 보기 하나: 첫 번째 탭 = 읽어주기 + 선택, 이미 선택된 보기를 다시 탭 = 정답 제출 */
+  function onTapOption(btn, i) {
     if (state.locked) return;
-    const q = currentQ();
-    const correct = normalize(value) === normalize(q.answer);
-    if (correct) { win(btn); } else { miss(btn); }
+    cancelRead();                                    // 이어 읽던 A·B·C는 멈춥니다
+    if (listening && recog) { try { recog.stop(); } catch (e) {} }   // 마이크가 소리를 먹지 않게 먼저 멈춤
+    if (state.selected === i) { grade(btn, i); return; }
+    state.selected = i;
+    $$('#options .opt').forEach((el) => el.classList.toggle('is-selected', el === btn));
+    const started = speak(btn.dataset.value, {
+      rate: optionRate(),
+      onend: () => btn.classList.remove('is-playing')
+    });
+    if (started) btn.classList.add('is-playing');
   }
 
-  /* 보기 하나만 천천히 읽어주기 (정답 선택·채점과는 무관) */
-  function hearOption(btn, text) {
-    clearTimeout(autoTimer);
-    // 음성인식 중이면 TTS 소리를 마이크가 듣지 않도록 인식을 먼저 정리합니다.
-    if (listening && recog) {
-      try { recog.stop(); } catch (e) {}
-      toast('🔊 보기를 들려줄게요', '');
-    }
-    // speak()는 시작할 때 이전 강조를 지우므로, 강조는 speak() 다음에 켭니다.
-    const started = speak(text, {
-      rate: optionRate(),
-      onend: () => { if (btn) btn.classList.remove('is-playing'); }
-    });
-    if (started) {
-      if (btn) btn.classList.add('is-playing');
-    } else {
-      toast('이 브라우저는 소리를 낼 수 없어요.', 'no');
-    }
+  function grade(btn, i) {
+    const q = currentQ();
+    if (sameAnswer(btn.dataset.value, q.answer)) win(btn);
+    else miss(btn);
   }
+
   function miss(btn) {
     btn.classList.add('opt-no');
     state.tries += 1;
     if (state.tries >= 2) {
       state.locked = true;
       const q = currentQ();
-      const target = $$('#options .opt').find((b) => normalize(b.dataset.value) === normalize(q.answer));
+      const target = $$('#options .opt').find((b) => sameAnswer(b.dataset.value, q.answer));
       if (target) target.classList.add('opt-ok');
-      toast('This one! ⭐ ' + q.answer, 'ok');
-      speak(q.answer);
-      setTimeout(next, 2100);
+      toast('This one! ⭐ ' + stripArticle(q.answer), 'ok');
+      speak(stripArticle(q.answer));
+      setTimeout(next, 2400);
     } else {
       toast('Try again! 다시 골라볼까요?', 'no');
+      state.selected = -1;
+      $$('#options .opt').forEach((el) => el.classList.remove('is-selected'));
+      setTimeout(() => btn.classList.remove('opt-no'), 700);
     }
-    setTimeout(() => btn.classList.remove('opt-no'), 700);
   }
   function win(btn) {
     if (state.locked) return;
@@ -385,13 +497,13 @@
     store.set('pt.stickers', stickers);
     const praise = ['Great job!', 'Wonderful!', 'Well done!', 'Perfect!', 'You are amazing!'];
     toast(praise[Math.floor(Math.random() * praise.length)] + ' ' + sticker, 'ok');
-    speak(q.answer);
+    speak(stripArticle(q.answer));
     confetti();
     if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
     setTimeout(next, 1750);
   }
   function next() {
-    stopSpeak();
+    cancelRead();
     state.index += 1;
     if (state.index >= state.story.items.length) { finish(); return; }
     renderQuestion();
@@ -399,11 +511,12 @@
 
   function finish() {
     renderStickers();
+    renderPoolInfo();
     $('#result-title').textContent = 'Wonderful!';
-    $('#result-sub').textContent = state.story.princess.nameKo + ' 이야기를 모두 마쳤어요';
+    $('#result-sub').textContent = state.story.princess.nameKo + ' 이야기 ' + ROUND_SIZE + '문제를 모두 마쳤어요';
     const stars = $('#result-stars');
     stars.innerHTML = '';
-    const n = Math.min(4, Math.max(1, state.earned.length));
+    const n = Math.min(5, Math.max(1, Math.ceil(state.earned.length / 2)));
     for (let i = 0; i < n; i++) {
       const s = document.createElement('span');
       s.textContent = '⭐';
@@ -414,7 +527,7 @@
     st.innerHTML = '';
     state.earned.forEach((e) => { const s = document.createElement('span'); s.textContent = e; st.appendChild(s); });
     const img = $('#result-img');
-    img.src = state.story.items[0].img;
+    img.src = state.story.princess.items[0].img;
     img.alt = state.story.princess.nameKo;
     show('screen-result');
     confetti(28);
@@ -456,18 +569,18 @@
       const said = alts.length ? alts : [finalText];
       const ok = said.some((t) => isCorrect(t, q)) || isCorrect(finalText, q);
       if (ok) {
-        stopSpeak();
-        const target = $$('#options .opt').find((b) => normalize(b.dataset.value) === normalize(q.answer));
+        cancelRead();
+        const target = $$('#options .opt').find((b) => sameAnswer(b.dataset.value, q.answer));
         win(target || null);
       } else if (!state.locked) {
         state.tries += 1;
         if (state.tries >= 2) {
           state.locked = true;
-          const t2 = $$('#options .opt').find((b) => normalize(b.dataset.value) === normalize(q.answer));
+          const t2 = $$('#options .opt').find((b) => sameAnswer(b.dataset.value, q.answer));
           if (t2) t2.classList.add('opt-ok');
-          toast('This one! ⭐ ' + q.answer, 'ok');
-          speak(q.answer);
-          setTimeout(next, 2100);
+          toast('This one! ⭐ ' + stripArticle(q.answer), 'ok');
+          speak(stripArticle(q.answer));
+          setTimeout(next, 2400);
         } else {
           toast('Close! 한 번 더 말해볼까요?', 'no');
         }
@@ -477,7 +590,7 @@
       listening = false;
       $('#btn-mic').classList.remove('is-hot');
       if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
-        toast('마이크를 쓸 수 없어요. 단어를 눌러보세요.', 'no');
+        toast('마이크를 쓸 수 없어요. 보기를 눌러보세요.', 'no');
       } else if (ev.error === 'no-speech') {
         toast('잘 안 들렸어요. 다시 말해볼까요?', 'no');
       } else if (ev.error === 'aborted') {
@@ -500,8 +613,7 @@
     if (!SR) { toast('이 브라우저는 마이크를 지원하지 않아요.', 'no'); return; }
     if (listening) { try { recog.stop(); } catch (e) {} return; }
     if (!recog) recog = initRecog();
-    clearTimeout(autoTimer);
-    stopSpeak();
+    cancelRead();
     const q = currentQ();
     $('#q-ko').textContent = q.ko || '';
     try { recog.start(); } catch (e) { try { recog.stop(); } catch (e2) {} }
@@ -579,7 +691,7 @@
       renderLevels();
       // warm-up utterance inside a user gesture (needed on iOS)
       speak('Let us start!');
-      if ($('#screen-play').classList.contains('is-active')) { stopSpeak(); renderQuestion(); }
+      if ($('#screen-play').classList.contains('is-active')) { renderQuestion(); }
     }));
     $$('.mini-level').forEach((b) => b.addEventListener('click', () => {
       const lv = Number(b.dataset.level);
@@ -591,38 +703,34 @@
     }));
 
     $('#btn-today').addEventListener('click', () => {
-      stopSpeak();
+      cancelRead();
       speak('Let us start!');
       startStory(todaysStory());
     });
     $('#btn-random').addEventListener('click', () => {
-      stopSpeak();
+      cancelRead();
       speak('Once upon a time!');
       startStory(randomStory());
     });
     $('#btn-hear').addEventListener('click', () => {
       if (!state.story) return;
-      clearTimeout(autoTimer);
       if (listening && recog) { try { recog.stop(); } catch (e) {} }
-      const hb = $('#btn-hear');
-      const started = speak(currentQ().text, { onend: () => hb.classList.remove('is-playing') });
-      if (started) hb.classList.add('is-playing');
+      readQuestionAndOptions();     // 질문 + A·B·C 보기를 다시 읽어줍니다
     });
     $('#today-card').addEventListener('click', () => $('#btn-today').click());
     $('#btn-mic').addEventListener('click', startListening);
     $('#btn-quit').addEventListener('click', () => {
-      stopSpeak();
+      cancelRead();
       if (recog && listening) { try { recog.stop(); } catch (e) {} }
       show('screen-home');
       renderHome();
     });
     $('#btn-again').addEventListener('click', () => {
-      const story = buildStory(state.story.princess, null, '다시 읽기');
-      startStory(story);
+      startStory(buildStory(state.story.princess, null, '다시 읽기'));
     });
     $('#btn-new').addEventListener('click', () => startStory(randomStory()));
 
-    document.addEventListener('visibilitychange', () => { if (document.hidden) stopSpeak(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) cancelRead(); });
   }
 
   /* ------------------------------ boot ------------------------------ */
