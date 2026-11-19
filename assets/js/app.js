@@ -186,16 +186,16 @@
     clown: 'crown', cloud: 'crown',
     app: 'apple', able: 'apple',
     press: 'dress', less: 'dress',
-    miller: 'mirror',
+    miller: 'mirror', mere: 'mirror', meer: 'mirror',
     wish: 'fish', dish: 'fish',
     log: 'frog', fog: 'frog',
     coat: 'boat', bote: 'boat',
     flour: 'flower',
-    see: 'sea',
+    see: 'sea', c: 'sea',
     shall: 'shell',
     dworf: 'dwarf', dworfs: 'dwarf', dorf: 'dwarf', dorfs: 'dwarf',
     dwarve: 'dwarf', dwarves: 'dwarf', warfs: 'dwarf',
-    cassle: 'castle'
+    cassle: 'castle', tour: 'tower'
   };
   const ARTICLES = { a: 1, an: 1, the: 1 };
 
@@ -224,7 +224,7 @@
   function tokenMatches(token, key) {
     if (token === key) return true;
     if (key.length >= 3 && token.length > key.length && token.indexOf(key) === 0) return true; // cup ~ cups
-    if (token.length >= 3 && key.length > token.length && key.indexOf(token) === 0) return true;
+    if (token.length >= 3 && (key === token + 's' || key === token + 'es')) return true;              // cup ~ cups (she ≠ shell, snow ≠ snowman)
     if (key.length >= 4 && token.length >= 4) {
       const tol = Math.min(token.length, key.length) >= 7 ? 2 : 1;
       if (lev(token, key) <= tol) return true;
@@ -238,8 +238,10 @@
     return false;
   }
   function isCorrect(spoken, level) {
-    const tokens = normalize(spoken).split(' ').filter(Boolean);
-    if (!tokens.length) return false;
+    const words = normalize(spoken).split(' ').filter(Boolean);
+    if (!words.length) return false;
+    const tokens = words.slice();
+    for (let i = 0; i + 1 < words.length; i++) tokens.push(words[i] + words[i + 1]);
     return level.keys.every((group) =>
       group.some((key) => tokens.some((tok) => tokenMatches(tok, normalize(key))))
     );
@@ -661,6 +663,7 @@
     recog = null;
     listening = false;
     graded = true;                      // 우리가 멈춘 경우는 onend 폴백 채점을 하지 않습니다
+    clearListenTimers();
     const btn = $('#btn-mic');
     if (btn) btn.classList.remove('is-hot');
     if (!r) return;
@@ -671,13 +674,95 @@
     try { r.abort(); } catch (e) { try { r.stop(); } catch (e2) {} }
   }
 
+  /* ---------- 소리 비교: 받아쓰기 철자가 틀려도 '소리'가 정답 보기에 가장 가까우면 인정 ----------
+     아이 발음은 sea → "C", crab → "crap", prince → "prints"처럼 받아 적히곤 합니다.
+     보기가 있는 4·6살 모드에서만 씁니다: 들린 말이 정답 보기와 소리가 확실히 가깝고,
+     다른 보기보다 분명히 더 가까울 때만 정답으로 봅니다(오답 보기를 말하면 그대로 오답). */
+  const LETTER = { a: 'ay', b: 'bee', c: 'see', d: 'dee', e: 'ee', f: 'ef', g: 'jee', h: 'aych', i: 'eye', j: 'jay',
+    k: 'kay', l: 'el', m: 'em', n: 'en', o: 'oh', p: 'pee', q: 'cue', r: 'ar', s: 'es', t: 'tee', u: 'you', v: 'vee',
+    w: 'dubyou', x: 'ex', y: 'why', z: 'zee' };
+  function pkey(w) {
+    w = String(w || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (!w) return '';
+    if (w.length === 1 && LETTER[w]) w = LETTER[w];
+    return w.replace(/ph/g, 'f').replace(/ck/g, 'k').replace(/c(?=[eiy])/g, 's').replace(/c/g, 'k').replace(/q/g, 'k')
+      .replace(/x/g, 'ks').replace(/z/g, 's').replace(/wh/g, 'w').replace(/^kn/, 'n').replace(/gh/g, '').replace(/th/g, 't')
+      .replace(/(ee|ea|ie|ey)/g, 'i').replace(/y$/, 'i').replace(/(oo|ou|ew|ue)/g, 'u').replace(/(ai|ay|ei)/g, 'e')
+      .replace(/(oa|ow|oh)/g, 'o').replace(/e$/, '').replace(/(.)\1+/g, '$1');
+  }
+  function soundSim(a, b) { if (!a || !b) return 0; return 1 - lev(a, b) / Math.max(a.length, b.length); }
+  function bestSoundSim(text, target) {
+    const tk = normalize(target).split(' ').filter(Boolean).map(pkey).join('');
+    const words = normalize(text).split(' ').filter(Boolean).map(pkey).filter(Boolean);
+    if (!tk || !words.length) return 0;
+    let best = soundSim(words.join(''), tk);
+    for (let i = 0; i < words.length; i++) {
+      best = Math.max(best, soundSim(words[i], tk));
+      if (i + 1 < words.length) best = Math.max(best, soundSim(words[i] + words[i + 1], tk));
+      if (i + 2 < words.length) best = Math.max(best, soundSim(words[i] + words[i + 1] + words[i + 2], tk));
+    }
+    return best;
+  }
+  function soundsLikeAnswer(texts, q) {
+    if (!q || !q.opts || q.opts.length < 2 || state.level > 6) return false;
+    let right = 0, other = 0;
+    texts.forEach((t) => {
+      q.opts.forEach((o) => {
+        const sim = bestSoundSim(t, o);
+        if (sameAnswer(o, q.answer)) right = Math.max(right, sim); else other = Math.max(other, sim);
+      });
+    });
+    return right >= 0.55 && right > other + 0.15;
+  }
+  window.__pt = { isCorrect: isCorrect, soundsLikeAnswer: soundsLikeAnswer, normalize: normalize };
+
+  /* ---------- 듣기 ----------
+     아이는 늦게 말을 시작하거나, "음…" 하고 쉬었다가 말합니다. 그래서
+       · 한 번 누르면 최대 LISTEN_MS 동안 계속 듣고(continuous),
+       · 말이 들린 뒤 SILENCE_MS 동안 조용하면 그때까지 들린 말 전체로 한 번만 채점합니다.
+       · 중간에라도 정답이 들리면 바로 정답 처리합니다.
+       · 첫 마디("음", "어")만으로 오답 처리하지 않습니다. */
+  const LISTEN_MS = 8000;
+  const SILENCE_MS = 1600;
+  let sessText = '';          // 이번 듣기에서 들린 말 전체
+  let sessAlts = [];          // 이번 듣기에서 들린 다른 후보들
+  let listenTimer = null, silenceTimer = null;
+  function clearListenTimers() { clearTimeout(listenTimer); clearTimeout(silenceTimer); listenTimer = null; silenceTimer = null; }
+
+  /* 지금까지 들린 말로 한 번만 채점하고 마이크를 닫습니다. */
+  function finishListening(sessQ) {
+    if (graded) return;
+    graded = true;
+    clearListenTimers();
+    const text = (sessText || lastSpoken || '').trim();
+    const alts = sessAlts.slice();
+    stopListening();
+    if (!sessQ || sessQ !== currentQ() || state.locked) return;
+    if (!text && !alts.length) {
+      toast('잘 안 들렸어요. 🎤를 누르고 크게 말해볼까요?', 'no');
+      const el = $('#q-ko');
+      if (el) el.textContent = (sessQ && sessQ.ko) || '';
+      return;
+    }
+    const all = [text].concat(alts).filter(Boolean);
+    if (!all.some((t) => isCorrect(t, sessQ)) && soundsLikeAnswer(all, sessQ)) {
+      // 철자는 달라도 소리가 정답 보기에 가장 가까움 → 정답으로 인정
+      $('#q-ko').textContent = '🗣 ' + text;
+      cancelRead();
+      const target = $$('#options .opt').find((b2) => sameAnswer(b2.dataset.value, sessQ.answer));
+      win(target || null);
+      return;
+    }
+    gradeSpoken(text, alts, sessQ);
+  }
+
   function initRecog(sessQ) {
     if (!SR) return null;
     const r = new SR();
     r.lang = 'en-US';
     r.interimResults = true;
-    r.maxAlternatives = 4;
-    r.continuous = false;
+    r.maxAlternatives = 5;
+    r.continuous = true;
 
     const current = () => recog === r;              // 지금 쓰는 인식기인지
     const sameQuestion = () => sessQ === currentQ(); // 그때의 문제가 아직 화면에 있는지
@@ -688,86 +773,74 @@
       const btn = $('#btn-mic');
       if (btn) btn.classList.add('is-hot');
       toast('듣고 있어요… 영어로 말해보세요!', '');
+      clearTimeout(listenTimer);
+      listenTimer = setTimeout(() => { if (current()) finishListening(sessQ); }, LISTEN_MS);
     };
     r.onresult = (ev) => {
-      if (!current() || !sameQuestion() || state.locked) return;
+      if (!current() || !sameQuestion() || state.locked || graded) return;
       const results = (ev && ev.results) || [];
-      const alts = [];
-      let finalText = '';
+      const finals = [];
       let interimText = '';
-      for (let i = (ev && ev.resultIndex) || 0; i < results.length; i++) {
+      for (let i = 0; i < results.length; i++) {
         const res = results[i];
         if (!res) continue;
         const n = res.length || 0;
         for (let j = 0; j < n; j++) {
           const t = res[j] && res[j].transcript ? String(res[j].transcript).trim() : '';
-          if (t && alts.indexOf(t) === -1) alts.push(t);
+          if (t && sessAlts.indexOf(t) === -1) sessAlts.push(t);
         }
         const t0 = res[0] && res[0].transcript ? String(res[0].transcript).trim() : '';
-        if (t0) { if (res.isFinal) finalText = t0; else interimText = t0; }
+        if (!t0) continue;
+        if (res.isFinal) { if (finals.indexOf(t0) === -1) finals.push(t0); }   // 안드로이드의 중복 결과는 한 번만
+        else interimText = t0;
       }
-      const spoken = finalText || interimText || (alts.length ? alts[alts.length - 1] : '');
-      if (spoken) lastSpoken = spoken;
+      if (finals.length) sessText = finals.join(' ');
+      const shown = (sessText + ' ' + interimText).trim();
+      if (shown) { lastSpoken = shown; $('#q-ko').textContent = '🗣 ' + shown; }
 
-      /* ① 중간 결과라도 이미 정답이면 isFinal을 기다리지 않고 바로 정답 처리 */
-      if (!graded && alts.some((t) => isCorrect(t, sessQ))) {
+      /* 정답이 들리면(중간 결과라도) 바로 정답 처리 */
+      const cands = [shown, sessText, interimText].concat(sessAlts).filter(Boolean);
+      if (cands.some((t) => isCorrect(t, sessQ))) {
         graded = true;
-        $('#q-ko').textContent = '🗣 ' + spoken;
+        clearListenTimers();
         stopListening();
-        gradeSpoken(spoken, alts, sessQ);
+        gradeSpoken(shown || sessText, cands, sessQ);
         return;
       }
-      if (!finalText) {
-        /* 아직 중간 결과 — 화면에만 보여 주고 계속 듣습니다 */
-        if (spoken) $('#q-ko').textContent = '🗣 ' + spoken;
-        return;
-      }
-      /* ② 최종 결과 — 채점하고 마이크를 닫습니다 */
-      graded = true;
-      stopListening();
-      gradeSpoken(finalText, alts, sessQ);
+      /* 아직 정답이 아니면 조금 더 들어 봅니다 — 말이 멈추면 그때 채점 */
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => { if (current()) finishListening(sessQ); }, SILENCE_MS);
     };
     r.onerror = (ev) => {
       const err = (ev && ev.error) || '';
-      if (current()) {
-        listening = false;
-        const btn = $('#btn-mic');
-        if (btn) btn.classList.remove('is-hot');
-      }
-      if (err === 'aborted') return;                 // 사용자가 멈춘 경우
+      if (err === 'aborted') return;                 // 우리가 멈춘 경우
       if (err === 'not-allowed' || err === 'service-not-allowed') {
         graded = true;                               // 권한 오류 — 채점할 말이 없습니다
+        clearListenTimers();
+        if (current()) {
+          listening = false;
+          const btn = $('#btn-mic');
+          if (btn) btn.classList.remove('is-hot');
+        }
         toast('마이크 권한이 없어요. Chrome 앱에서 열거나 보기를 눌러보세요.', 'no');
         const hint = $('#mic-hint');
         if (hint) {
           hint.classList.remove('is-hidden');
           hint.textContent = '마이크를 열 수 없어요 — Chrome 앱에서 열거나 보기를 눌러보세요.';
         }
-      } else if (err === 'no-speech') {
-        toast('잘 안 들렸어요. 다시 말해볼까요?', 'no');
       } else if (err === 'network') {
         toast('인터넷 연결이 잠깐 끊겼어요. 다시 말해볼까요?', 'no');
-      } else {
-        toast('다시 한 번 말해볼까요?', 'no');
       }
+      /* no-speech 등은 onend에서 들린 말이 있는지 보고 처리합니다 */
     };
     r.onend = () => {
-      const wasCurrent = current();
-      if (wasCurrent) {
-        listening = false;
-        recog = null;
-        const btn = $('#btn-mic');
-        if (btn) btn.classList.remove('is-hot');
-      }
-      if (!wasCurrent || !sameQuestion()) return;    // 늦게 온 옛 인식기의 종료는 무시
-      /* ③ isFinal 없이 끝났는데 마지막으로 들린 말이 남아 있으면 그것으로 채점 */
-      if (!graded && !state.locked && lastSpoken) {
-        graded = true;
-        gradeSpoken(lastSpoken, [], sessQ);
-        return;
-      }
-      const el = $('#q-ko');
-      if (el && String(el.textContent).indexOf('🗣') !== 0) el.textContent = (sessQ && sessQ.ko) || '';
+      if (!current()) return;                        // 늦게 온 옛 인식기의 종료는 무시
+      /* 안드로이드 크롬은 continuous여도 일찍 끝나곤 합니다 — 지금까지 들린 말로 채점 */
+      if (!graded && sameQuestion()) { finishListening(sessQ); return; }
+      listening = false;
+      recog = null;
+      const btn = $('#btn-mic');
+      if (btn) btn.classList.remove('is-hot');
     };
     return r;
   }
@@ -785,6 +858,9 @@
     cancelRead();
     const sessQ = currentQ();
     lastSpoken = '';
+    sessText = '';
+    sessAlts = [];
+    clearListenTimers();
     graded = false;
     $('#q-ko').textContent = sessQ.ko || '';
     const r = initRecog(sessQ);
@@ -801,6 +877,8 @@
       const r2 = initRecog(sessQ);
       recog = r2;
       lastSpoken = '';
+      sessText = '';
+      sessAlts = [];
       graded = false;
       try {
         r2.start();
