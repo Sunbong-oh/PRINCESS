@@ -193,7 +193,8 @@
     flour: 'flower',
     see: 'sea',
     shall: 'shell',
-    nome: 'gnome', nomes: 'gnome',
+    dworf: 'dwarf', dworfs: 'dwarf', dorf: 'dwarf', dorfs: 'dwarf',
+    dwarve: 'dwarf', dwarves: 'dwarf', warfs: 'dwarf',
     cassle: 'castle'
   };
   const ARTICLES = { a: 1, an: 1, the: 1 };
