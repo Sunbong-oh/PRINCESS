@@ -59,7 +59,6 @@ h1,h2,h3,p{ margin:0; }
   display:flex; flex-direction:column; gap:16px;
   min-height:100dvh;
 }
-
 .brand{ text-align:center; padding-top:6px; }
 .brand .crown{ font-size:40px; line-height:1; filter:drop-shadow(0 6px 10px rgba(224,165,46,.35)); animation:crownBob 3.4s ease-in-out infinite; }
 @keyframes crownBob{ 0%,100%{ transform:translateY(0) rotate(-4deg);} 50%{ transform:translateY(-6px) rotate(4deg);} }
@@ -112,7 +111,9 @@ h1,h2,h3,p{ margin:0; }
   box-shadow:0 14px 30px rgba(224,165,46,.26), inset 0 -3px 0 rgba(247,200,90,.4);
 }
 .pc-art{
-  display:block; width:100%; aspect-ratio:4 / 5; overflow:hidden;
+  display:block; width:100%; aspect-ratio:4 / 5;
+  max-height:clamp(120px, 19dvh, 230px);
+  overflow:hidden;
   border-radius:17px; background:#f6efff;
   background:linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, var(--pc, #c9b4ff) 22%, #ffffff) 100%);
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.9);
@@ -347,10 +348,22 @@ h1,h2,h3,p{ margin:0; }
   .home-lead span{ display:inline; margin-left:4px; }
 }
 
+/* 좁은 화면: 브랜드·여백을 줄여 공주 6장이 한 화면에 최대한 들어오게 */
+@media (max-width:619px){
+  .home-inner{ gap:12px; }
+  .brand .crown{ font-size:32px; }
+  .brand h1{ font-size:clamp(28px, 8.5vw, 40px); margin-top:2px; }
+  .brand-sub{ font-size:13.5px; }
+  .home-lead{ font-size:14px; margin-top:-2px; }
+  .princess-grid{ gap:10px; }
+  .pc-name{ font-size:14px; margin-top:6px; }
+  .pc-name-en{ font-size:10px; }
+}
+
 /* short phones: keep the home grid and the answer cards reachable */
 @media (max-height:700px) and (max-width:620px){
   .pc-art{ aspect-ratio:1 / 1; }
-  .brand .crown{ font-size:32px; }
+  .brand .crown{ font-size:26px; }
 }
 
 @media (min-width:760px) and (min-height:700px){
