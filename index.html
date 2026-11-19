@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Princess Talk · 공주와 영어로 말해요</title>
 <meta name="theme-color" content="#fbe3f3" />
-<meta name="description" content="공주 그림을 보며 영어로 말해보는 어린이 말하기 놀이. 6명의 공주 중 골라서, 4살·6살·8살 난이도로." />
+<meta name="description" content="공주 그림을 보며 영어로 말해보는 어린이 말하기 놀이. 6명의 공주 중 골라서, 4살·6살·8살·12살 난이도로." />
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="assets/icon.svg" />
 <link rel="manifest" href="manifest.json" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Gowun+Dodum&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/css/style.css?v=20261119f" />
+<link rel="stylesheet" href="assets/css/style.css?v=20261119g" />
 </head>
 <body>
 <div class="bg-deco" aria-hidden="true">
@@ -35,6 +35,7 @@
         <button class="level-btn" data-level="4"><span class="lvl-emoji">🐣</span><span class="lvl-txt">4살</span></button>
         <button class="level-btn is-on" data-level="6"><span class="lvl-emoji">🌸</span><span class="lvl-txt">6살</span></button>
         <button class="level-btn" data-level="8"><span class="lvl-emoji">👑</span><span class="lvl-txt">8살</span></button>
+        <button class="level-btn" data-level="12"><span class="lvl-emoji">💎</span><span class="lvl-txt">12살</span></button>
       </div>
 
       <p class="home-lead">어떤 공주와 놀까요? <span>카드를 누르면 바로 시작!</span></p>
@@ -65,6 +66,7 @@
           <button class="mini-level" data-level="4">4</button>
           <button class="mini-level" data-level="6">6</button>
           <button class="mini-level" data-level="8">8</button>
+          <button class="mini-level" data-level="12">12</button>
         </div>
       </div>
 
@@ -80,6 +82,7 @@
           <div class="ask-tools">
             <button class="tool" id="btn-hear"><span>🔊</span> 다시 듣기</button>
             <button class="tool tool-mic" id="btn-mic"><span>🎤</span> 말해보기</button>
+            <button class="tool tool-hint is-hidden" id="btn-hint"><span>💡</span> 힌트</button>
           </div>
           <p class="mic-hint" id="mic-hint">보기를 한 번 누르면 들려주고, 한 번 더 누르면 정답이에요.</p>
         </div>
@@ -110,7 +113,7 @@
 
 <canvas id="fx" aria-hidden="true"></canvas>
 
-<script src="assets/js/data.js?v=20261119f"></script>
-<script src="assets/js/app.js?v=20261119f"></script>
+<script src="assets/js/data.js?v=20261119g"></script>
+<script src="assets/js/app.js?v=20261119g"></script>
 </body>
 </html>

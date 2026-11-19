@@ -71,18 +71,20 @@ h1,h2,h3,p{ margin:0; }
 .brand h1 span{ color:#ff7cb6; }
 .brand-sub{ margin-top:2px; font-size:15px; color:var(--ink-soft); }
 
+/* 4살·6살·8살·12살 — 네 버튼이 모바일 한 줄에 들어가도록 칸과 여백을 줄였습니다. */
 .level-picker{
-  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
-  background:rgba(255,255,255,.62); padding:8px; border-radius:22px;
+  display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px;
+  background:rgba(255,255,255,.62); padding:7px; border-radius:22px;
   border:2px solid #fff; box-shadow:var(--shadow-soft);
 }
 .level-btn{
   appearance:none; border:2px solid transparent; background:transparent; cursor:pointer;
-  border-radius:16px; padding:10px 4px 9px; color:var(--ink-soft);
+  border-radius:15px; padding:9px 2px 8px; color:var(--ink-soft); min-width:0;
   display:flex; flex-direction:column; align-items:center; gap:2px;
-  font-family:inherit; font-size:15px; font-weight:700; transition:all .18s ease;
+  font-family:inherit; font-size:14px; font-weight:700; line-height:1.1; transition:all .18s ease;
 }
-.level-btn .lvl-emoji{ font-size:22px; line-height:1.1; }
+.level-btn .lvl-emoji{ font-size:20px; line-height:1.1; }
+.level-btn .lvl-txt{ white-space:nowrap; }
 .level-btn.is-on{
   background:linear-gradient(180deg,#fff,#ffeef7);
   border-color:#ffb3d6; color:#c3407c;
@@ -244,6 +246,17 @@ h1,h2,h3,p{ margin:0; }
 .tool span{ font-size:16px; }
 .tool:active{ transform:scale(.97); }
 .tool-mic{ border-color:#ded0ff; color:#6c48c9; }
+/* 💡 힌트 — 12살(선택지 없이 바로 말하기)에서만 보입니다. 옐로우/골드 톤. */
+.tool-hint{
+  border-color:#ffe2a6; color:#9a6a00;
+  background:linear-gradient(180deg,#fffdf3,#fff4d6);
+}
+.tool-hint span{ filter:drop-shadow(0 1px 2px rgba(224,165,46,.35)); }
+.tool-hint.is-playing{
+  background:linear-gradient(180deg,#fffbee,#ffe9ae); border-color:#f7c85a;
+  animation:hearPulse 1s ease-in-out infinite;
+}
+.tool.is-hidden{ display:none; }
 .tool-mic.is-hot{
   background:linear-gradient(180deg,#fff,#ffeafe); border-color:#ff9ad0; color:#d6338a;
   animation:pulse 1.2s ease-in-out infinite;
@@ -258,6 +271,8 @@ h1,h2,h3,p{ margin:0; }
 .mic-hint.is-hidden{ display:none; }
 
 .options{ display:flex; flex-direction:column; gap:8px; padding-bottom:4px; flex:0 0 auto; }
+/* 12살 모드: 보기 카드가 없으므로 목록 자체를 숨깁니다. */
+.options.is-hidden{ display:none; }
 /* 보기 버튼 하나에 🔊 를 함께 넣었습니다. 한 번 누르면 읽어주고(선택), 한 번 더 누르면 정답! */
 .opt{
   appearance:none; width:100%; min-width:0; text-align:left; cursor:pointer;

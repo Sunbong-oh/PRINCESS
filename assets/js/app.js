@@ -61,8 +61,8 @@
   const synth = window.speechSynthesis;
 
   /* 낭독 속도: 아이가 단어를 몰라도 따라 들을 수 있게 아주 천천히, 또박또박 읽습니다.
-     (4살 0.68 / 6살 0.75 / 8살 0.82 유지) 보기 낭독은 조금 더 느리게. */
-  const LEVEL_RATE = { 4: 0.68, 6: 0.75, 8: 0.82 };
+     (4살 0.68 / 6살 0.75 / 8살 0.82 / 12살 0.90 유지) 보기 낭독은 조금 더 느리게. */
+  const LEVEL_RATE = { 4: 0.68, 6: 0.75, 8: 0.82, 12: 0.90 };
   function currentRate() { return LEVEL_RATE[state.level] || LEVEL_RATE[6]; }
   function optionRate() { return Math.max(0.6, Math.round((currentRate() - 0.04) * 100) / 100); }
 
@@ -132,9 +132,12 @@
     stopSpeak();
     const q = currentQ();
     const parts = [{ text: q.text, rate: currentRate(), gap: 650 }];
-    state.opts.forEach((label, i) => {
-      parts.push({ text: String.fromCharCode(65 + i) + '. ' + label, rate: optionRate(), gap: 480 });
-    });
+    /* 12살은 보기가 없으니 질문만 읽습니다 (A·B·C 낭독 없음). */
+    if (state.level !== 12) {
+      state.opts.forEach((label, i) => {
+        parts.push({ text: String.fromCharCode(65 + i) + '. ' + label, rate: optionRate(), gap: 480 });
+      });
+    }
     let k = 0;
     const step = () => {
       if (my !== readSeq) return;
@@ -393,7 +396,8 @@
     $$('#progress span').forEach((s, i) => s.classList.toggle('done', i < state.index));
   }
   function currentItem() { return state.story.items[state.index]; }
-  function currentQ() { return currentItem().q[state.level]; }
+  /* 12살 문항은 따로 두지 않고 8살 문장을 그대로 씁니다 — 선택지 없이 바로 말하는 모드. */
+  function currentQ() { const it = currentItem(); return it.q[state.level] || it.q[8]; }
 
   function renderQuestion() {
     const item = currentItem();
@@ -422,44 +426,61 @@
     box.innerHTML = '';
     // 보기 순서는 매번 섞고, 순서대로 A·B·C 이름을 붙입니다.
     state.opts = [];
-    shuffle(q.opts).forEach((raw, i) => {
-      const value = stripArticle(raw);
-      const b = document.createElement('button');
-      b.className = 'opt';
-      b.type = 'button';
-      b.dataset.value = value;
-      b.dataset.index = String(i);
+    /* 12살 모드: 선택지를 없애고 아이가 영어로 바로 말하게 합니다. */
+    const isFreeSpeak = (state.level === 12);
+    if (isFreeSpeak) {
+      box.classList.add('is-hidden');
+    } else {
+      box.classList.remove('is-hidden');
+      shuffle(q.opts).forEach((raw, i) => {
+        const value = stripArticle(raw);
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.type = 'button';
+        b.dataset.value = value;
+        b.dataset.index = String(i);
 
-      const dot = document.createElement('span');
-      dot.className = 'dot';
-      dot.textContent = String.fromCharCode(65 + i);
-      b.appendChild(dot);
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.textContent = String.fromCharCode(65 + i);
+        b.appendChild(dot);
 
-      const t = document.createElement('span');
-      t.className = 'opt-text';
-      t.textContent = value;
-      b.appendChild(t);
+        const t = document.createElement('span');
+        t.className = 'opt-text';
+        t.textContent = value;
+        b.appendChild(t);
 
-      // 보기 안의 🔊 — 버튼은 하나입니다. 한 번 누르면 읽어주고, 한 번 더 누르면 정답!
-      const ear = document.createElement('span');
-      ear.className = 'opt-ear';
-      ear.setAttribute('aria-hidden', 'true');
-      ear.textContent = '🔊';
-      b.appendChild(ear);
+        // 보기 안의 🔊 — 버튼은 하나입니다. 한 번 누르면 읽어주고, 한 번 더 누르면 정답!
+        const ear = document.createElement('span');
+        ear.className = 'opt-ear';
+        ear.setAttribute('aria-hidden', 'true');
+        ear.textContent = '🔊';
+        b.appendChild(ear);
 
-      b.addEventListener('click', () => onTapOption(b, i));
-      box.appendChild(b);
-      state.opts.push(value);
-    });
+        b.addEventListener('click', () => onTapOption(b, i));
+        box.appendChild(b);
+        state.opts.push(value);
+      });
+    }
+
+    /* 💡 힌트는 12살에서만 보입니다. */
+    const hintBtn = $('#btn-hint');
+    if (hintBtn) hintBtn.classList.toggle('is-hidden', !isFreeSpeak);
 
     $('#mic-hint').classList.remove('is-hidden');
-    $('#mic-hint').textContent = SR
-      ? '보기를 한 번 누르면 들려주고, 한 번 더 누르면 정답이에요. 🎤 로 말해도 좋아요!'
-      : '보기를 한 번 누르면 들려주고, 한 번 더 누르면 정답이에요.';
+    if (isFreeSpeak) {
+      $('#mic-hint').textContent = SR
+        ? '선택지가 없어요! 🎤 말해보기를 눌러 영어로 바로 답해 보세요.'
+        : '선택지가 없어요! 그림을 보고 영어로 바로 답해 보세요.';
+    } else {
+      $('#mic-hint').textContent = SR
+        ? '보기를 한 번 누르면 들려주고, 한 번 더 누르면 정답이에요. 🎤 로 말해도 좋아요!'
+        : '보기를 한 번 누르면 들려주고, 한 번 더 누르면 정답이에요.';
+    }
     const micBtn = $('#btn-mic');
     micBtn.style.display = SR ? '' : 'none';
 
-    // 질문을 읽고, 잠깐 쉬었다가 A·B·C 보기를 차례로 읽어줍니다.
+    // 질문을 읽고, 잠깐 쉬었다가 A·B·C 보기를 차례로 읽어줍니다 (12살은 질문만).
     readQuestionAndOptions();
   }
 
@@ -844,6 +865,23 @@
       readQuestionAndOptions();     // 질문 + A·B·C 보기를 다시 읽어줍니다
     });
     $('#btn-mic').addEventListener('click', startListening);
+    /* 💡 힌트 — 12살 모드에서만 보입니다. 정답 문장을 화면에 쓰지 않고 귀로 한 번 들려주고,
+       방금 들린 문장을 아이가 영어로 말해 보게 합니다. */
+    $('#btn-hint').addEventListener('click', () => {
+      if (!state.story) return;
+      if (state.locked) return;
+      if (state.level !== 12) return;
+      cancelRead();                    // 읽던 질문 낭독은 먼저 멈춥니다
+      if (listening) stopListening();  // 마이크가 힌트 소리를 먹지 않게 먼저 멈춤
+      const q = currentQ();
+      const hb = $('#btn-hint');
+      const started = speak(q.answer, {
+        rate: 0.85,
+        onend: () => { if (hb) hb.classList.remove('is-playing'); }
+      });
+      if (started && hb) hb.classList.add('is-playing');
+      toast('힌트! 방금 들린 문장을 영어로 말해 보세요 💡', '');
+    });
     $('#btn-quit').addEventListener('click', () => {
       cancelRead();
       if (listening) stopListening();
