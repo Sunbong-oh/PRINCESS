@@ -236,7 +236,7 @@ h1,h2,h3,p{ margin:0; }
   font-size: clamp(19px, 5.4vw, 26px); font-weight:700; color:#4b3263; line-height:1.25;
 }
 .q-ko{ font-size:13px; color:#9c86b8; margin-top:3px; }
-.ask-tools{ display:flex; gap:8px; margin-top:10px; }
+.ask-tools{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
 .tool{
   appearance:none; flex:1; border:2px solid #ffe0f0; background:#fff;
   border-radius:14px; padding:9px 8px; font-family:inherit; font-weight:700; font-size:14px;
@@ -257,6 +257,18 @@ h1,h2,h3,p{ margin:0; }
   animation:hearPulse 1s ease-in-out infinite;
 }
 .tool.is-hidden{ display:none; }
+/* ⭕ 맞았어요 — 옆에서 부모님(또는 보조 선생님)이 아이 답을 바로 정답 처리하는 버튼입니다.
+   아이가 막 누르는 메인 버튼(다시 듣기·말해보기)보다 작고 차분한 민트/그린 톤,
+   오른쪽에 붙여 두어 손이 가까운 쪽에 두고 가능한 한 눈에 덜 띄게 합니다.
+   4개 버튼(다시 듣기·말해보기·힌트·맞았어요)은 좁은 화면에서 자동으로 다음 줄로 접힙니다. */
+.tool-pass{
+  flex:0 0 auto; margin-left:auto; padding:6px 11px; font-size:12.5px;
+  border:1.5px dashed #a9dcc4; border-radius:12px; color:#2f7d5b;
+  background:linear-gradient(180deg,#f7fdfa,#eafaf2);
+}
+.tool-pass span{ font-size:13px; }
+.tool-pass:active{ transform:scale(.97); background:#dff5e9; }
+@media (max-width:360px){ .tool-pass{ padding:6px 9px; font-size:12px; } }
 .tool-mic.is-hot{
   background:linear-gradient(180deg,#fff,#ffeafe); border-color:#ff9ad0; color:#d6338a;
   animation:pulse 1.2s ease-in-out infinite;

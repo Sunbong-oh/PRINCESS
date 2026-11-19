@@ -162,7 +162,40 @@
 
   /* ------------------------------ answer matching ------------------------------ */
   const NUM = { 0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve' };
-  const HOMOPHONE = { to: 'two', too: 'two', for: 'four', fore: 'four', tree: 'three', free: 'three', ate: 'eight', won: 'one', sx: 'six', ive: 'five' };
+  /* 아이 발음을 위해 같은 소리로 들리는 말을 정답 낱말로 바꿔 줍니다.
+     · 아직 어린 아이는 blue를 brew·glue처럼, crown을 clown처럼 말합니다.
+     · 숫자·색·사물의 '소리 나는 대로' 오인식만 넣습니다.
+     · 서로 다른 색끼리(orange↔banana, red↔blue …), 서로 다른 사물끼리는 절대 넣지 않습니다.
+       (그래야 보기에 있는 오답을 아이가 말했을 때 정답으로 오판하지 않습니다.) */
+  const HOMOPHONE = {
+    // 숫자
+    to: 'two', too: 'two', for: 'four', fore: 'four', pour: 'four',
+    tree: 'three', free: 'three', thee: 'three', tea: 'three',
+    ate: 'eight', won: 'one', sx: 'six', ive: 'five',
+    fife: 'five', hive: 'five', vibe: 'five', heaven: 'seven',
+    // 색
+    brew: 'blue', blew: 'blue', flu: 'blue', glue: 'blue', boo: 'blue',
+    read: 'red', led: 'red', wed: 'red',
+    hello: 'yellow', fellow: 'yellow', jello: 'yellow',
+    clean: 'green', grin: 'green',
+    people: 'purple', pop: 'purple', purpal: 'purple',
+    think: 'pink', link: 'pink',
+    right: 'white', write: 'white', wide: 'white',
+    back: 'black', block: 'black',
+    // 사물·장소
+    clown: 'crown', cloud: 'crown',
+    app: 'apple', able: 'apple',
+    press: 'dress', less: 'dress',
+    miller: 'mirror',
+    wish: 'fish', dish: 'fish',
+    log: 'frog', fog: 'frog',
+    coat: 'boat', bote: 'boat',
+    flour: 'flower',
+    see: 'sea',
+    shall: 'shell',
+    nome: 'gnome', nomes: 'gnome',
+    cassle: 'castle'
+  };
   const ARTICLES = { a: 1, an: 1, the: 1 };
 
   function normalize(str) {
@@ -194,6 +227,12 @@
     if (key.length >= 4 && token.length >= 4) {
       const tol = Math.min(token.length, key.length) >= 7 ? 2 : 1;
       if (lev(token, key) <= tol) return true;
+    }
+    /* 4·6살은 발음이 아직 또렷하지 않습니다. 세 글자 낱말도 한 글자만 다르면 받아 줍니다.
+       (red~bed, cup~cap, ice~nice …) 다만 세 글자 색·낱말을 엉뚱하게 맞히지 않도록
+       첫 글자나 끝 글자가 같은 경우만 허용합니다. 8·12살은 이 관대한 규칙을 쓰지 않습니다. */
+    if (state.level <= 6 && key.length >= 3 && token.length >= 3 && lev(token, key) <= 1) {
+      if (token.charAt(0) === key.charAt(0) || token.charAt(token.length - 1) === key.charAt(key.length - 1)) return true;
     }
     return false;
   }
@@ -865,6 +904,20 @@
       readQuestionAndOptions();     // 질문 + A·B·C 보기를 다시 읽어줍니다
     });
     $('#btn-mic').addEventListener('click', startListening);
+    /* ⭕ 맞았어요 — 옆에서 부모가 아이 답을 바로 정답 처리하는 보조 버튼.
+       🎤 인식이 안 됐거나 12살처럼 보기가 없을 때도 씁니다. 정답을 맞혔을 때와
+       똑같이 스티커·칭찬·정답 낭독·다음 문제로 넘어갑니다. */
+    $('#btn-pass').addEventListener('click', () => {
+      if (!state.story || state.locked) return;
+      const q = currentQ();
+      const target = $$('#options .opt').find((b) => sameAnswer(b.dataset.value, q.answer));
+      stopListening();          // 듣던 마이크를 먼저 접어 소리를 먹지 않게
+      cancelRead();             // 읽던 질문·보기 낭독을 멈춤
+      // 아이가 다른 보기를 골라 두었어도 정답 보기만 남깁니다.
+      state.selected = -1;
+      $$('#options .opt').forEach((el) => el.classList.remove('is-selected'));
+      win(target || null);
+    });
     /* 💡 힌트 — 12살 모드에서만 보입니다. 정답 문장을 화면에 쓰지 않고 귀로 한 번 들려주고,
        방금 들린 문장을 아이가 영어로 말해 보게 합니다. */
     $('#btn-hint').addEventListener('click', () => {
