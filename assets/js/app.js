@@ -242,17 +242,13 @@
   function buildStory(princess, rand, label) {
     return { princess: princess, items: pickRound(princess, rand), label: label || '' };
   }
-  /* 오늘의 공주는 날짜로 정해집니다 (홈 화면에서는 문항을 꺼내지 않습니다). */
+  /* 오늘의 공주는 날짜로 정해집니다 — 첫 화면 카드 중 한 장에만 ⭐ 오늘 추천 배지가 붙습니다. */
   function todaysPrincess() {
     const seed = hashStr('princess-talk-' + dayKey());
     return PRINCESSES[Math.floor(rng(seed)() * PRINCESSES.length)];
   }
-  function todaysStory() {
-    const seed = hashStr('princess-talk-' + dayKey());
-    return buildStory(todaysPrincess(), rng(seed), '오늘의 이야기');
-  }
-  function randomStory() {
-    const pool = PRINCESSES.filter((p) => !state.story || p.id !== state.story.princess.id);
+  function randomStory(anyPrincess) {
+    const pool = anyPrincess ? PRINCESSES : PRINCESSES.filter((p) => !state.story || p.id !== state.story.princess.id);
     const list = pool.length ? pool : PRINCESSES;
     const princess = list[Math.floor(Math.random() * list.length)];
     return buildStory(princess, rng((Math.random() * 4294967296) >>> 0), '새 이야기');
@@ -298,14 +294,70 @@
     el.textContent = '공주별 ' + ROUND_SIZE + '문제씩 · 총 ' + ALL.length + '문항';
   }
   function renderHome() {
-    const princess = todaysPrincess();
-    $('#today-img').src = princess.items[0].img;
-    $('#today-img').alt = princess.nameKo + ' ' + princess.name;
-    $('#today-title').textContent = princess.nameKo + ' · ' + princess.title;
-    $('#today-sub').textContent = princess.name + ' — ' + princess.titleKo;
+    renderPrincessCards();
     renderLevels();
     renderStickers();
     renderPoolInfo();
+  }
+
+  /* 첫 화면의 공주 6명 카드.
+     · 대표 그림은 각 공주의 첫 장면(hero-*.webp)이고, object-fit:contain 이라 잘리지 않습니다.
+     · 카드(그림 포함 전체)를 누르면 그 공주 10문제가 바로 시작됩니다.
+     · 오늘의 공주 카드에만 ⭐ 오늘 추천 배지가 붙습니다. */
+  function heroOf(p) { return p.items[0].img; }
+  function cardNameOf(p) { return p.cardNameKo || p.nameKo; }
+  function renderPrincessCards() {
+    const grid = $('#princess-grid');
+    if (!grid) return;
+    const today = todaysPrincess();
+    grid.innerHTML = '';
+    PRINCESSES.forEach((p) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'princess-card' + (p.id === today.id ? ' is-today' : '');
+      card.dataset.princess = p.id;
+      if (card.style && typeof card.style.setProperty === 'function') card.style.setProperty('--pc', p.color);
+      card.setAttribute('aria-label', cardNameOf(p) + ' ' + p.name + ' · 10문제 시작');
+      card.setAttribute('title', p.nameKo + ' — ' + p.titleKo);
+
+      if (p.id === today.id) {
+        const badge = document.createElement('span');
+        badge.className = 'pc-badge';
+        badge.textContent = '⭐ 오늘 추천';
+        card.appendChild(badge);
+      }
+
+      const art = document.createElement('span');
+      art.className = 'pc-art';
+      const img = document.createElement('img');
+      img.src = heroOf(p);
+      img.alt = cardNameOf(p) + ' ' + p.name;
+      img.setAttribute('loading', 'eager');
+      img.setAttribute('decoding', 'async');
+      art.appendChild(img);
+      card.appendChild(art);
+
+      const ko = document.createElement('span');
+      ko.className = 'pc-name';
+      ko.textContent = cardNameOf(p);
+      card.appendChild(ko);
+
+      const en = document.createElement('span');
+      en.className = 'pc-name-en';
+      en.textContent = p.name;
+      card.appendChild(en);
+
+      card.addEventListener('click', () => startPrincess(p));
+      grid.appendChild(card);
+    });
+  }
+
+  /* 카드를 누르면 그 공주의 10문제가 바로 시작됩니다. */
+  function startPrincess(princess) {
+    cancelRead();
+    if (listening && recog) { try { recog.stop(); } catch (e) {} }
+    speak('Let us start!');
+    startStory(buildStory(princess, null, princess.nameKo));
   }
 
   /* ------------------------------ play ------------------------------ */
@@ -668,22 +720,16 @@
       if (state.story) renderQuestion();
     }));
 
-    $('#btn-today').addEventListener('click', () => {
-      cancelRead();
-      speak('Let us start!');
-      startStory(todaysStory());
-    });
     $('#btn-random').addEventListener('click', () => {
       cancelRead();
       speak('Once upon a time!');
-      startStory(randomStory());
+      startStory(randomStory(true));          // 첫 화면의 랜덤은 6명 중 누구든
     });
     $('#btn-hear').addEventListener('click', () => {
       if (!state.story) return;
       if (listening && recog) { try { recog.stop(); } catch (e) {} }
       readQuestionAndOptions();     // 질문 + A·B·C 보기를 다시 읽어줍니다
     });
-    $('#today-card').addEventListener('click', () => $('#btn-today').click());
     $('#btn-mic').addEventListener('click', startListening);
     $('#btn-quit').addEventListener('click', () => {
       cancelRead();
@@ -695,6 +741,11 @@
       startStory(buildStory(state.story.princess, null, '다시 읽기'));
     });
     $('#btn-new').addEventListener('click', () => startStory(randomStory()));
+    $('#btn-home').addEventListener('click', () => {
+      cancelRead();
+      show('screen-home');
+      renderHome();
+    });
 
     document.addEventListener('visibilitychange', () => { if (document.hidden) cancelRead(); });
   }

@@ -793,6 +793,7 @@ const PRINCESSES = [
     id: 'el',
     name: 'The Snow Queen',
     nameKo: '눈의 여왕',
+    cardNameKo: '눈의 여왕 엘사',   /* 첫 화면 카드에만 쓰는 이름 (문제·결과 제목은 nameKo) */
     title: 'The Ice Castle',
     titleKo: '얼음 성',
     color: '#63b8ff',
