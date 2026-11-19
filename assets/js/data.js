@@ -861,15 +861,15 @@ const PRINCESSES = [
         q: {
           4: Q('What color is her hair?', 'Gold',
                ['Gold', 'Black', 'Brown'],
-               [['gold', 'golden', 'blonde']],
+               [['gold', 'golden', 'blonde', 'yellow']],
                '그녀의 머리카락은 무슨 색일까요?'),
           6: Q('What color is her hair?', 'Long golden hair',
                ['Long golden hair', 'Short black hair', 'Short brown hair'],
-               [['gold', 'golden', 'blonde'], ['hair']],
+               [['gold', 'golden', 'blonde', 'yellow'], ['hair']],
                '그녀의 머리카락은 무슨 색일까요?'),
           8: Q('What color is her hair?', 'She has long golden hair with flowers.',
                ['She has long golden hair with flowers.', 'She has short black hair with flowers.', 'She has short brown hair with flowers.'],
-               [['gold', 'golden', 'blonde'], ['hair']],
+               [['gold', 'golden', 'blonde', 'yellow'], ['hair']],
                '그녀의 머리카락은 무슨 색일까요?')
         }
       },
