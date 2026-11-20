@@ -266,7 +266,7 @@
     state.hintOpen = false;
 
     const img = $('#talk-img');
-    if (img) { img.src = cur.img; img.alt = cur.princess.ko + ' 공주'; }
+    if (img) { img.src = cur.img; img.alt = cur.princess.ko; }
     const tag = $('#princess-tag');
     if (tag) tag.textContent = cur.princess.ko;
     const ex = $('#ex-text');
