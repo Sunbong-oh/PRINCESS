@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Princess Talk · 일상 영어회화</title>
+<meta name="theme-color" content="#fbe3f3" />
+<meta name="description" content="공주가 먼저 영어로 말하고 질문을 던져요. 아이는 보기 없이 내 이야기를 영어로 말해보는 일상 영어회화 놀이. 4살·6살·8살·12살 난이도." />
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="../assets/icon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Gowun+Dodum&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="talk.css?v=20261121a" />
+</head>
+<body>
+<div class="bg-deco" aria-hidden="true">
+  <span class="spark s1">✦</span><span class="spark s2">✧</span><span class="spark s3">✦</span>
+  <span class="spark s4">✧</span><span class="spark s5">✦</span><span class="spark s6">✧</span>
+</div>
+
+<main id="app">
+
+  <!-- ================= HOME ================= -->
+  <section class="screen is-active" id="screen-home">
+    <div class="home-inner">
+      <nav class="mode-tabs" aria-label="게임 고르기">
+        <a class="mode-tab" href="../">🎨 그림 퀴즈</a>
+        <a class="mode-tab is-on" href="./" aria-current="page">💬 일상 영어회화</a>
+      </nav>
+
+      <header class="brand">
+        <div class="crown">💬</div>
+        <h1>Princess <span>Talk</span></h1>
+        <p class="brand-sub">공주와 오늘 이야기를 나눠요</p>
+      </header>
+
+      <div class="level-picker" role="group" aria-label="난이도 선택">
+        <button class="level-btn" data-level="4"><span class="lvl-emoji">🐣</span><span class="lvl-txt">4살</span></button>
+        <button class="level-btn is-on" data-level="6"><span class="lvl-emoji">🌸</span><span class="lvl-txt">6살</span></button>
+        <button class="level-btn" data-level="8"><span class="lvl-emoji">👑</span><span class="lvl-txt">8살</span></button>
+        <button class="level-btn" data-level="12"><span class="lvl-emoji">💎</span><span class="lvl-txt">12살</span></button>
+      </div>
+
+      <p class="home-lead">공주가 먼저 말해요. <span>이어서 내 이야기를 말해요!</span></p>
+
+      <div class="topic-chips" id="topic-chips" aria-label="오늘 나올 주제"></div>
+
+      <button class="btn btn-primary btn-start" id="btn-start">시작하기 ✨</button>
+      <p class="pool-info" id="pool-info">7가지 주제 · 63문항 · 하루 10문제</p>
+
+      <div class="sticker-strip" id="home-stickers" aria-label="모은 스티커">
+        <span class="sticker-label">내 스티커</span>
+        <div class="sticker-list" id="home-sticker-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PLAY ================= -->
+  <section class="screen" id="screen-play">
+    <div class="play-inner">
+      <div class="topbar">
+        <button class="icon-btn" id="btn-quit" aria-label="그만하기">✕</button>
+        <div class="topbar-mid">
+          <div class="progress" id="progress">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="topbar-title" id="play-title">—</div>
+        </div>
+        <div class="mini-levels">
+          <button class="mini-level" data-level="4">4</button>
+          <button class="mini-level" data-level="6">6</button>
+          <button class="mini-level" data-level="8">8</button>
+          <button class="mini-level" data-level="12">12</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <figure class="figure">
+          <img id="talk-img" alt="" />
+          <figcaption class="princess-tag" id="princess-tag"></figcaption>
+          <div class="ex-bubble" id="ex-bubble">
+            <span class="ex-label">공주가 먼저 말해요</span>
+            <p id="ex-text">—</p>
+          </div>
+        </figure>
+
+        <div class="ask">
+          <p class="q-en" id="q-text">—</p>
+          <p class="q-ko" id="q-ko"></p>
+
+          <div class="ask-tools">
+            <button class="tool" id="btn-hear"><span>🔊</span> 다시 듣기</button>
+            <button class="tool" id="btn-hint"><span>💡</span> 대답 예시</button>
+            <button class="tool tool-mic" id="btn-mic"><span>🎤</span> 말해보기</button>
+          </div>
+
+          <div class="hint-card is-hidden" id="hint-card">
+            <p class="hint-label">이렇게 말해봐요</p>
+            <p class="hint-text" id="hint-text">—</p>
+          </div>
+
+          <button class="btn btn-pass" id="btn-pass"><span class="pass-mark">⭕</span> 맞았어요</button>
+          <p class="mic-hint" id="mic-hint">말이 잘 안 잡히면 <b>맞았어요</b>를 눌러 주세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" aria-live="polite"></div>
+  </section>
+
+  <!-- ================= RESULT ================= -->
+  <section class="screen" id="screen-result">
+    <div class="result-inner">
+      <div class="result-crown">👑</div>
+      <h2 class="result-title" id="result-title">Wonderful!</h2>
+      <p class="result-sub" id="result-sub">오늘도 영어로 이야기했어요</p>
+      <div class="result-stars" id="result-stars"></div>
+      <div class="result-stickers" id="result-stickers"></div>
+      <div class="result-art"><img id="result-img" alt="" /></div>
+      <button class="btn btn-primary btn-xl" id="btn-again">🔁 한 번 더</button>
+      <button class="btn btn-ghost" id="btn-new">✨ 다른 10문제</button>
+      <button class="btn btn-ghost" id="btn-home">🏠 처음으로</button>
+    </div>
+  </section>
+
+</main>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script src="talk-data.js?v=20261121a"></script>
+<script src="talk.js?v=20261121a"></script>
+</body>
+</html>

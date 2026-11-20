@@ -55,12 +55,28 @@ h1,h2,h3,p{ margin:0; }
 /* ---------------- HOME ---------------- */
 .home-inner{
   max-width:620px; margin:0 auto;
-  padding: max(22px, env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
-  display:flex; flex-direction:column; gap:16px;
+  padding: max(12px, env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; gap:12px;
   min-height:100dvh;
 }
-.brand{ text-align:center; padding-top:6px; }
-.brand .crown{ font-size:40px; line-height:1; filter:drop-shadow(0 6px 10px rgba(224,165,46,.35)); animation:crownBob 3.4s ease-in-out infinite; }
+
+/* 게임 전환 탭 — 그림 퀴즈 ↔ 일상 영어회화 */
+.mode-tabs{
+  display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:5px;
+  background:rgba(255,255,255,.72); border:2px solid #fff; border-radius:999px;
+  box-shadow:var(--shadow-soft);
+}
+.mode-tab{
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  text-decoration:none; color:#8a72ad; font-size:13px; line-height:1;
+  padding:9px 6px; border-radius:999px; white-space:nowrap;
+}
+.mode-tab.is-on{
+  background:linear-gradient(135deg, #ffb6da 0%, #c7a9ff 100%);
+  color:#fff; font-weight:700; box-shadow:0 4px 12px rgba(178,120,255,.28);
+}
+.brand{ text-align:center; padding-top:0; }
+.brand .crown{ font-size:34px; line-height:1; filter:drop-shadow(0 6px 10px rgba(224,165,46,.35)); animation:crownBob 3.4s ease-in-out infinite; }
 @keyframes crownBob{ 0%,100%{ transform:translateY(0) rotate(-4deg);} 50%{ transform:translateY(-6px) rotate(4deg);} }
 .brand h1{
   font-family:"Baloo 2", "Gowun Dodum", sans-serif;
