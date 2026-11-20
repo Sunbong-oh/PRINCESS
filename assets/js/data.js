@@ -4377,7 +4377,7 @@ const PRINCESSES = [
         img: 'assets/img/ra-3-lanterns.webp',
         scene: '등불 축제',
         q: {
-          4: Q('What color is the water?', 'Dark',
+          4: Q('What is the water like?', 'Dark',
                ['Dark', 'Yellow', 'White'],
                [['dark']],
                '물은 어떤가요?'),
