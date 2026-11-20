@@ -195,7 +195,44 @@
     shall: 'shell',
     dworf: 'dwarf', dworfs: 'dwarf', dorf: 'dwarf', dorfs: 'dwarf',
     dwarve: 'dwarf', dwarves: 'dwarf', warfs: 'dwarf',
-    cassle: 'castle', tour: 'tower'
+    cassle: 'castle', castel: 'castle', tour: 'tower',
+    // 새로 추가된 문항의 정답 낱말 (4·6살 발음)
+    beau: 'bow', bo: 'bow',
+    aprun: 'apron', aprin: 'apron',
+    baskit: 'basket',
+    pellow: 'pillow', pillo: 'pillow',
+    kandle: 'candle', cancel: 'candle',
+    certain: 'curtain', cortin: 'curtain',
+    jool: 'jewel', jools: 'jewel', juwel: 'jewel',
+    mirrow: 'mirror',
+    windo: 'window', wendo: 'window',
+    war: 'wall', wawl: 'wall',
+    lantin: 'lantern', lanturn: 'lantern', lanton: 'lantern',
+    bird: 'beard',
+    hows: 'house', housey: 'house',
+    daw: 'door', dore: 'door',
+    pass: 'path', pathe: 'path',
+    sunny: 'sunny', sonny: 'sunny',
+    teara: 'tiara', tiarra: 'tiara',
+    neckless: 'necklace', neckles: 'necklace',
+    earings: 'earrings', earins: 'earrings',
+    mun: 'moon', mune: 'moon',
+    knight: 'night', nite: 'night',
+    chandeleer: 'chandelier', chandalier: 'chandelier',
+    colum: 'column', colums: 'column',
+    ston: 'stone', stown: 'stone',
+    clok: 'clock', klok: 'clock',
+    lamb: 'lamp', lam: 'lamp',
+    perl: 'pearl', perls: 'pearls',
+    bubel: 'bubble', bubbl: 'bubble',
+    send: 'sand',
+    ferry: 'fairy', fairry: 'fairy',
+    pedals: 'petals', petel: 'petal',
+    pallet: 'palette', palate: 'palette',
+    pants: 'paints', pain: 'paints',
+    brayed: 'braid', brad: 'braid',
+    shynie: 'shiny', shiney: 'shiny',
+    lak: 'lake', laik: 'lake'
   };
   const ARTICLES = { a: 1, an: 1, the: 1 };
 
@@ -277,13 +314,33 @@
   if (!Array.isArray(stickers)) stickers = [];
 
   /* ------------------------------ 문항 풀 ------------------------------ */
-  /* 공주마다 문항이 정확히 ROUND_SIZE(10)개씩 있습니다.
-     한 판은 고른 공주 한 명의 10문항을 전부 섞어서 냅니다 — 다른 공주 문항은 섞지 않습니다.
-     그래서 공주를 바꿔 가면 6명 × 10문항 = 60문항을 겹치지 않고 모두 풀 수 있습니다. */
+  /* 공주마다 문항이 40개씩 있습니다 (6명 × 40 = 240문항).
+     한 판은 고른 공주 한 명의 문항 중 '아직 안 푼' 10문제를 뽑아 냅니다.
+     이미 낸 문항 ID는 공주별로 localStorage('pt.seen')에 남겨, 같은 공주로 4판(4일)을 놀아도
+     매번 완전히 다른 10문제가 나옵니다 (40문항 = 10 × 4). 다른 공주 문항은 섞지 않습니다. */
+  function seenMap() {
+    const v = store.get('pt.seen', {});
+    return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+  }
   function pickRound(princess, rand) {
     const rnd = rand || Math.random;
     const mine = allIds().filter((id) => BY_ID[id].princess.id === princess.id);
-    return shuffleWith(mine, rnd).slice(0, ROUND_SIZE).map((id) => BY_ID[id]);
+    const seen = seenMap();
+    let done = Array.isArray(seen[princess.id]) ? seen[princess.id].filter((id) => mine.indexOf(id) !== -1) : [];
+    const fresh = mine.filter((id) => done.indexOf(id) === -1);
+    let picked;
+    if (fresh.length >= ROUND_SIZE) {
+      picked = shuffleWith(fresh, rnd).slice(0, ROUND_SIZE);
+    } else {
+      /* 남은 미출제 문항을 먼저 모두 넣고, 이 공주의 이력을 비운 뒤
+         방금 뽑힌 문항을 뺀 나머지에서 모자란 만큼 채웁니다 (한 판 안 중복 0). */
+      const rest = shuffleWith(mine.filter((id) => fresh.indexOf(id) === -1), rnd);
+      picked = fresh.concat(rest).slice(0, ROUND_SIZE);
+      done = [];
+    }
+    seen[princess.id] = done.concat(picked);
+    store.set('pt.seen', seen);
+    return shuffleWith(picked, rnd).map((id) => BY_ID[id]);
   }
 
   function buildStory(princess, rand, label) {
@@ -338,7 +395,7 @@
   function renderPoolInfo() {
     const el = $('#pool-info');
     if (!el) return;
-    el.textContent = '공주별 ' + ROUND_SIZE + '문제씩 · 총 ' + ALL.length + '문항';
+    el.textContent = '공주별 하루 ' + ROUND_SIZE + '문제 · 총 ' + ALL.length + '문항';
   }
   function renderHome() {
     renderPrincessCards();
