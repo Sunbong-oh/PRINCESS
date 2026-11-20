@@ -399,6 +399,8 @@ h1,h2,h3,p{ margin:0; }
   .brand-sub{ font-size:13.5px; }
   .home-lead{ font-size:14px; margin-top:-2px; }
   .princess-grid{ gap:10px; }
+  /* 위에 게임 전환 탭이 생겨 그만큼 카드 그림 높이를 조금 줄입니다(한 화면 유지) */
+  .pc-art{ max-height:clamp(120px, 17dvh, 220px); }
   .pc-name{ font-size:14px; margin-top:6px; }
   .pc-name-en{ font-size:10px; }
 }

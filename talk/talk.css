@@ -226,6 +226,7 @@ h1,h2,h3,p{ margin:0; }
 }
 .tool:active{ transform:scale(.97); }
 .tool span{ font-size:14px; }
+.tool.is-on{ background:linear-gradient(135deg,#fff1cf,#ffe3a8); color:#9a6a00; border-color:#ffd98a; }
 .tool.is-hot{ background:linear-gradient(135deg,#ffd0e6,#ffb2d8); color:#a33668; border-color:#ffb2d8; }
 .tool.is-playing{ background:#efe4ff; border-color:#d6c2ff; }
 
